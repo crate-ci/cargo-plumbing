@@ -5,7 +5,7 @@ use clap::Parser;
 #[command(bin_name = "cargo")]
 #[command(styles = clap_cargo::style::CLAP_STYLING)]
 pub(crate) enum Command {
-    #[command(subcommand)]
+    #[command(subcommand, about = "Execute low-level plumbing commands for Cargo")]
     Plumbing(crate::plumbing::Plumbing),
 }
 
