@@ -22,7 +22,7 @@ pub(crate) struct LocateProjectArgs {
 
     /// The representation in which to print the project location
     #[arg(long = "message-format", value_enum, default_value_t = MessageFormat::Json)]
-    pub message_format: MessageFormat,
+    message_format: MessageFormat,
 
     /// Path to the `Cargo.toml` file to start searching from
     #[arg(long = "manifest-path", value_name = "path")]
