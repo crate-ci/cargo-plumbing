@@ -159,6 +159,7 @@ dependencies = [
  "cargo-test-support",
  "clap",
  "clap-cargo",
+ "serde_json",
  "snapbox",
 ]
 
