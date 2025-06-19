@@ -30,16 +30,15 @@ fn manifest_path_arg() {
 
     p.cargo_plumbing("plumbing locate-manifest")
         .args(&["--manifest-path", wd])
-        .with_stderr_data(str![[r#"
-[ERROR] unexpected argument '--manifest-path' found
+        .with_stdout_data(
+            str![[r#"
+{"manifest_path":"[ROOT]/foo/Cargo.toml","reason":"manifest-location"}
 
-Usage: cargo plumbing locate-manifest
-
-For more information, try '--help'.
-
-"#]])
-        .with_stdout_data("")
-        .with_status(2)
+"#]]
+            .is_jsonlines(),
+        )
+        .with_stderr_data("")
+        .with_status(0)
         .run();
 }
 
