@@ -1,3 +1,4 @@
+use cargo::GlobalContext;
 use cargo_plumbing::CargoResult;
 
 #[derive(Debug, clap::Subcommand)]
@@ -5,7 +6,7 @@ use cargo_plumbing::CargoResult;
 pub(crate) enum Plumbing {}
 
 impl Plumbing {
-    pub(crate) fn exec(self) -> CargoResult<()> {
+    pub(crate) fn exec(self, gctx: &GlobalContext) -> CargoResult<()> {
         anyhow::bail!("not implemented");
     }
 }
