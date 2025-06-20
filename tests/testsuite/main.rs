@@ -1,6 +1,5 @@
-automod::dir!("tests/testsuite");
-
 mod cargo_plumbing_locate_project;
+mod locate_project;
 
 use cargo_test_support::{execs, process, ArgLineCommandExt, Execs, Project};
 

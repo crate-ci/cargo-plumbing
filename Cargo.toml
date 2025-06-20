@@ -135,7 +135,6 @@ serde-untagged = "0.1.6"
 serde_json = "1.0.138"
 
 [dev-dependencies]
-automod = "1.0.14"
 cargo-test-macro = "0.4.0"
 cargo-test-support = "0.7.0"
 snapbox = { version = "0.6.21", features = ["cmd", "path"] }
