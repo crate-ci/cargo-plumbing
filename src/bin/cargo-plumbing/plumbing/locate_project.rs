@@ -15,6 +15,7 @@ pub(crate) struct Args {
 }
 
 #[derive(Serialize)]
+#[cfg_attr(feature = "unstable-schema", derive(schemars::JsonSchema))]
 struct ProjectLocation<'a> {
     manifest_path: &'a str,
 }
@@ -37,4 +38,15 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
     gctx.shell().print_json(&location)?;
 
     Ok(())
+}
+
+#[cfg(feature = "unstable-schema")]
+#[test]
+fn dump_project_location_schema() {
+    let schema = schemars::schema_for!(ProjectLocation<'_>);
+    let dump = serde_json::to_string_pretty(&schema).unwrap();
+    snapbox::assert_data_eq!(
+        dump,
+        snapbox::file!("../../../../project-location.schema.json").raw()
+    );
 }
