@@ -1,3 +1,4 @@
+use cargo::GlobalContext;
 use cargo_plumbing::CargoResult;
 use clap::Parser;
 
@@ -10,9 +11,9 @@ pub(crate) enum Command {
 }
 
 impl Command {
-    pub(crate) fn exec(self) -> CargoResult<()> {
+    pub(crate) fn exec(self, gctx: &GlobalContext) -> CargoResult<()> {
         match self {
-            Self::Plumbing(plumbing) => plumbing.exec(),
+            Self::Plumbing(plumbing) => plumbing.exec(gctx),
         }
     }
 }
