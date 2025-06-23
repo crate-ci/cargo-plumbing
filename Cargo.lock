@@ -384,6 +384,7 @@ dependencies = [
  "serde",
  "serde-untagged",
  "serde_json",
+ "snapbox",
 ]
 
 [[package]]

@@ -1,6 +1,8 @@
 use serde::ser::Serialize;
 use serde_json::json;
 
+pub mod locate_manifest;
+
 pub trait Message: Serialize {
     fn reason(&self) -> &str;
 
