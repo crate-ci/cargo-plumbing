@@ -9,12 +9,15 @@ fn simple() {
     let p = project().build();
 
     p.cargo_plumbing("plumbing locate-manifest")
-        .with_stderr_data(str![[r#"
-[ERROR] not implemented
+        .with_stdout_data(
+            str![[r#"
+{"manifest_path":"[ROOT]/foo/Cargo.toml","reason":"manifest-location"}
 
-"#]])
-        .with_stdout_data("")
-        .with_status(101)
+"#]]
+            .is_jsonlines(),
+        )
+        .with_stderr_data("")
+        .with_status(0)
         .run();
 }
 
@@ -74,12 +77,15 @@ fn found_virtual_manifest() {
         .build();
 
     p.cargo_plumbing("plumbing locate-manifest")
-        .with_stderr_data(str![[r#"
-[ERROR] not implemented
+        .with_stdout_data(
+            str![[r#"
+{"manifest_path":"[ROOT]/foo/Cargo.toml","reason":"manifest-location"}
 
-"#]])
-        .with_stdout_data("")
-        .with_status(101)
+"#]]
+            .is_jsonlines(),
+        )
+        .with_stderr_data("")
+        .with_status(0)
         .run();
 }
 
@@ -89,7 +95,7 @@ fn no_manifest_found() {
 
     p.cargo_plumbing("plumbing locate-manifest")
         .with_stderr_data(str![[r#"
-[ERROR] not implemented
+[ERROR] could not find `Cargo.toml` in `[ROOT]/foo` or any parent directory
 
 "#]])
         .with_stdout_data("")

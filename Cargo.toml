@@ -23,6 +23,7 @@ automod = "1.0.14"
 cargo = "0.88.0"
 cargo-test-macro = "0.4.0"
 cargo-test-support = "0.7.0"
+cargo-plumbing-schemas = { version = "0.0.1", path = "crates/cargo-plumbing-schemas" }
 clap = "4.5.31"
 clap-cargo = "0.15.2"
 schemars = "0.9.0"
@@ -141,6 +142,7 @@ default = []
 [dependencies]
 anyhow.workspace = true
 cargo.workspace = true
+cargo-plumbing-schemas.workspace = true
 clap = { workspace = true, features = ["derive"] }
 clap-cargo.workspace = true
 serde = { workspace = true, features = ["derive"] }
@@ -149,6 +151,7 @@ serde-untagged.workspace = true
 [dev-dependencies]
 cargo-test-macro.workspace = true
 cargo-test-support.workspace = true
+serde_json.workspace = true
 snapbox.workspace = true
 
 [lints]

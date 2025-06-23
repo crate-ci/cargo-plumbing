@@ -367,12 +367,14 @@ version = "0.0.2"
 dependencies = [
  "anyhow",
  "cargo",
+ "cargo-plumbing-schemas",
  "cargo-test-macro",
  "cargo-test-support",
  "clap",
  "clap-cargo",
  "serde",
  "serde-untagged",
+ "serde_json",
  "snapbox",
 ]
 
