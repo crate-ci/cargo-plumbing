@@ -8,10 +8,10 @@ edition.workspace = true
 rust-version.workspace = true
 
 [features]
-unstable-schema = ["dep:schemars", "dep:serde_json"]
+unstable-schema = ["dep:schemars"]
 
 [dependencies]
 schemars = { workspace = true, features = ["preserve_order", "semver1"], optional = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, optional = true }
+serde_json.workspace = true
 serde-untagged.workspace = true
