@@ -1,17 +1,18 @@
 use cargo::GlobalContext;
 use cargo_plumbing::CargoResult;
 
+pub(crate) mod read_manifest;
+
 #[derive(Debug, clap::Subcommand)]
 #[command(styles = clap_cargo::style::CLAP_STYLING)]
 pub(crate) enum Plumbing {
-    /// Temporary dummy command to make the enum inhabited
-    Dummy,
+    ReadManifest(read_manifest::Args),
 }
 
 impl Plumbing {
-    pub(crate) fn exec(self, _gctx: &GlobalContext) -> CargoResult<()> {
+    pub(crate) fn exec(self, gctx: &GlobalContext) -> CargoResult<()> {
         match self {
-            Self::Dummy => anyhow::bail!("not implemented"),
+            Self::ReadManifest(args) => read_manifest::exec(gctx, args),
         }
     }
 }
