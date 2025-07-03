@@ -388,6 +388,7 @@ dependencies = [
 name = "cargo-plumbing-schemas"
 version = "0.0.1"
 dependencies = [
+ "cargo-util-schemas",
  "schemars",
  "serde",
  "serde-untagged",
@@ -460,10 +461,12 @@ version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dc1a6f7b5651af85774ae5a34b4e8be397d9cf4bc063b7e6dbd99a841837830"
 dependencies = [
+ "schemars",
  "semver",
  "serde",
  "serde-untagged",
  "serde-value",
+ "serde_json",
  "thiserror 2.0.12",
  "toml",
  "unicode-xid",

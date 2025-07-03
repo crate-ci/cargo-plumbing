@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use serde::de::DeserializeOwned;
 
 pub mod locate_manifest;
+pub mod read_manifest;
 
 pub struct MessageIter<R, M> {
     _m: PhantomData<M>,

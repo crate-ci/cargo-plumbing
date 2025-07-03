@@ -24,6 +24,7 @@ cargo = "0.89.0"
 cargo-test-macro = "0.4.3"
 cargo-test-support = "0.7.4"
 cargo-plumbing-schemas = { version = "0.0.1", path = "crates/cargo-plumbing-schemas" }
+cargo-util-schemas = "0.8.2"
 clap = "4.5.31"
 clap-cargo = "0.15.2"
 schemars = "1.0.0-alpha.17"
