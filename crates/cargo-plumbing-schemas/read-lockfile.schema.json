@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReadLockfileMessage",
+  "description": "Represents the messages outputted by the `cargo-plumbing read-lockfile` command.\n\n This enum captures all possible JSON objects that the command can emit. The `reason`\n field acts as a discriminant to distinguish between different message types.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "lockfile": {
+          "$ref": "#/$defs/NormalizedResolve"
+        },
+        "reason": {
+          "type": "string",
+          "const": "lockfile"
+        }
+      },
+      "required": [
+        "reason",
+        "lockfile"
+      ]
+    }
+  ],
+  "$defs": {
+    "NormalizedResolve": {
+      "type": "object",
+      "properties": {
+        "package": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NormalizedDependency"
+          }
+        },
+        "metadata": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "patch": {
+          "$ref": "#/$defs/NormalizedPatch"
+        }
+      },
+      "required": [
+        "package"
+      ]
+    },
+    "NormalizedDependency": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "checksum": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dependencies": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "replace": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "NormalizedPatch": {
+      "type": "object",
+      "properties": {
+        "unused": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NormalizedDependency"
+          }
+        }
+      },
+      "required": [
+        "unused"
+      ]
+    }
+  }
+}
