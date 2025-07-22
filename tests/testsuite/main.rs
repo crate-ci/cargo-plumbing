@@ -1,7 +1,9 @@
 mod cargo_plumbing;
 mod cargo_plumbing_locate_manifest;
+mod cargo_plumbing_read_lockfile;
 mod cargo_plumbing_read_manifest;
 mod locate_manifest;
+mod read_lockfile;
 mod read_manifest;
 
 use cargo_test_support::{execs, process, ArgLineCommandExt, Execs, Project, TestEnvCommandExt};
