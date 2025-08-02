@@ -30,6 +30,7 @@ cargo-util-schemas = "0.8.2"
 clap = "4.5.31"
 clap-cargo = "0.15.2"
 schemars = "1.0.0-alpha.17"
+semver = "1.0.26"
 serde = "1.0.217"
 serde_json = "1.0.138"
 serde-untagged = "0.1.6"
@@ -152,7 +153,9 @@ cargo-plumbing-schemas.workspace = true
 cargo-util.workspace = true
 clap = { workspace = true, features = ["derive"] }
 clap-cargo.workspace = true
+semver.workspace = true
 serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
 serde-untagged.workspace = true
 toml.workspace = true
 url = { workspace = true, features = ["serde"] }

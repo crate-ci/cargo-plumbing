@@ -58,7 +58,7 @@ pub struct NormalizedDependency {
     pub replace: Option<PackageIdSpec>,
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash, Ord, PartialOrd)]
 pub enum Precise {
     Locked,
     GitUrlFragment(String),

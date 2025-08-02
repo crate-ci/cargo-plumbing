@@ -14,6 +14,7 @@ use std::marker::PhantomData;
 use serde::de::DeserializeOwned;
 
 pub mod locate_manifest;
+pub mod lock_dependencies;
 pub mod lockfile;
 pub mod read_lockfile;
 pub mod read_manifest;

@@ -389,6 +389,7 @@ dependencies = [
  "cargo-util",
  "clap",
  "clap-cargo",
+ "semver",
  "serde",
  "serde-untagged",
  "serde_json",

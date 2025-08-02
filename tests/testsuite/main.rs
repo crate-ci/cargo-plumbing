@@ -1,8 +1,10 @@
 mod cargo_plumbing;
 mod cargo_plumbing_locate_manifest;
+mod cargo_plumbing_lock_dependencies;
 mod cargo_plumbing_read_lockfile;
 mod cargo_plumbing_read_manifest;
 mod locate_manifest;
+mod lock_dependencies;
 mod read_lockfile;
 mod read_manifest;
 

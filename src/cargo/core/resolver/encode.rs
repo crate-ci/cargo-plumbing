@@ -2,12 +2,13 @@
 //!
 //! This module is a temporary copy from the cargo codebase.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::str::FromStr;
 
+use cargo::util::interning::InternedString;
 use cargo::{
-    core::{GitReference, PackageIdSpec, SourceKind},
+    core::{GitReference, PackageId, PackageIdSpec, Resolve, ResolveVersion, SourceId, SourceKind},
     CargoResult,
 };
 use cargo_plumbing_schemas::lockfile::{
@@ -75,12 +76,12 @@ impl Patch {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EncodableDependency {
-    name: String,
-    version: String,
-    source: Option<EncodableSourceId>,
-    checksum: Option<String>,
-    dependencies: Option<Vec<EncodablePackageId>>,
-    replace: Option<EncodablePackageId>,
+    pub name: String,
+    pub version: String,
+    pub source: Option<EncodableSourceId>,
+    pub checksum: Option<String>,
+    pub dependencies: Option<Vec<EncodablePackageId>>,
+    pub replace: Option<EncodablePackageId>,
 }
 
 impl EncodableDependency {
@@ -122,21 +123,42 @@ impl EncodableDependency {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct EncodableSourceId {
-    pub url: Url,
     pub kind: SourceKind,
+    pub url: Url,
     pub precise: Option<Precise>,
     pub encoded: bool,
 }
 
 impl EncodableSourceId {
-    pub fn new(url: Url, kind: SourceKind) -> Self {
+    pub fn new(url: Url, precise: Option<&'static str>, kind: SourceKind) -> Self {
         Self {
             url,
             kind,
             encoded: true,
-            precise: None,
+            precise: precise.map(|s| {
+                if s == "locked" {
+                    Precise::Locked
+                } else {
+                    Precise::GitUrlFragment(s.to_owned())
+                }
+            }),
+        }
+    }
+
+    pub fn without_url_encoded(url: Url, precise: Option<&'static str>, kind: SourceKind) -> Self {
+        Self {
+            url,
+            kind,
+            encoded: false,
+            precise: precise.map(|s| {
+                if s == "locked" {
+                    Precise::Locked
+                } else {
+                    Precise::GitUrlFragment(s.to_owned())
+                }
+            }),
         }
     }
 
@@ -241,7 +263,7 @@ impl<'de> Deserialize<'de> for EncodableSourceId {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct EncodablePackageId {
     name: String,
     version: Option<String>,
@@ -339,4 +361,114 @@ fn str_to_url(string: &str) -> CargoResult<Url> {
             anyhow::format_err!("invalid url `{}`: {}", string, s)
         }
     })
+}
+
+pub struct EncodeState<'a> {
+    counts: Option<HashMap<InternedString, HashMap<&'a semver::Version, usize>>>,
+}
+
+impl<'a> EncodeState<'a> {
+    pub fn new(resolve: &'a Resolve) -> EncodeState<'a> {
+        let counts = if resolve.version() >= ResolveVersion::V2 {
+            let mut map = HashMap::new();
+            for id in resolve.iter() {
+                let slot = map
+                    .entry(id.name())
+                    .or_insert_with(HashMap::new)
+                    .entry(id.version())
+                    .or_insert(0);
+                *slot += 1;
+            }
+            Some(map)
+        } else {
+            None
+        };
+        EncodeState { counts }
+    }
+}
+
+pub fn encodable_resolve_node(
+    id: PackageId,
+    resolve: &Resolve,
+    state: &EncodeState<'_>,
+) -> EncodableDependency {
+    let (replace, deps) = match resolve.replacement(id) {
+        Some(id) => (
+            Some(encodable_package_id(id, state, resolve.version())),
+            None,
+        ),
+        None => {
+            let mut deps = resolve
+                .deps_not_replaced(id)
+                .map(|(id, _)| encodable_package_id(id, state, resolve.version()))
+                .collect::<Vec<_>>();
+            deps.sort();
+            (None, if deps.is_empty() { None } else { Some(deps) })
+        }
+    };
+
+    EncodableDependency {
+        name: id.name().to_string(),
+        version: id.version().to_string(),
+        source: encodable_source_id(id.source_id(), resolve.version()),
+        dependencies: deps,
+        replace,
+        checksum: if resolve.version() >= ResolveVersion::V2 {
+            resolve.checksums().get(&id).and_then(|s| s.clone())
+        } else {
+            None
+        },
+    }
+}
+
+pub fn encodable_package_id(
+    id: PackageId,
+    state: &EncodeState<'_>,
+    resolve_version: ResolveVersion,
+) -> EncodablePackageId {
+    let mut version = Some(id.version().to_string());
+    let mut id_to_encode = id.source_id();
+    if resolve_version <= ResolveVersion::V2 {
+        if let Some(GitReference::Branch(b)) = id_to_encode.git_reference() {
+            if b == "master" {
+                id_to_encode =
+                    SourceId::for_git(id_to_encode.url(), GitReference::DefaultBranch).unwrap();
+            }
+        }
+    }
+    let mut source = encodable_source_id(id_to_encode.without_precise(), resolve_version);
+    if let Some(counts) = &state.counts {
+        let version_counts = &counts[&id.name()];
+        if version_counts[&id.version()] == 1 {
+            source = None;
+            if version_counts.len() == 1 {
+                version = None;
+            }
+        }
+    }
+    EncodablePackageId {
+        name: id.name().to_string(),
+        version,
+        source,
+    }
+}
+
+pub fn encodable_source_id(id: SourceId, version: ResolveVersion) -> Option<EncodableSourceId> {
+    if id.is_path() {
+        None
+    } else {
+        Some(if version >= ResolveVersion::V4 {
+            EncodableSourceId::new(
+                id.url().clone(),
+                id.precise_git_fragment(),
+                id.kind().clone(),
+            )
+        } else {
+            EncodableSourceId::without_url_encoded(
+                id.url().clone(),
+                id.precise_git_fragment(),
+                id.kind().clone(),
+            )
+        })
+    }
 }
