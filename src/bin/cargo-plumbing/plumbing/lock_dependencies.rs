@@ -12,8 +12,8 @@ use cargo_plumbing::cargo::core::resolver::encode::{
     encodable_package_id, encodable_resolve_node, encodable_source_id, EncodableDependency,
     EncodeState,
 };
-use cargo_plumbing_schemas::lock_dependencies::LockDependenciesMessage;
 use cargo_plumbing_schemas::lockfile::NormalizedPatch;
+use cargo_plumbing_schemas::lockfile_contents::LockfileContentsMessage;
 
 #[derive(Debug, clap::Args)]
 pub(crate) struct Args {
@@ -51,7 +51,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
         ResolveVersion::V2 | ResolveVersion::V1 => None,
     };
     gctx.shell()
-        .print_json(&LockDependenciesMessage::Lockfile { version })?;
+        .print_json(&LockfileContentsMessage::Lockfile { version })?;
 
     let mut ids: Vec<_> = resolve.iter().collect();
     ids.sort();
@@ -78,12 +78,12 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
 
     for package in packages {
         let package = package.normalize()?;
-        let msg = LockDependenciesMessage::LockedPackage { package };
+        let msg = LockfileContentsMessage::LockedPackage { package };
         gctx.shell().print_json(&msg)?;
     }
 
     if !metadata.is_empty() {
-        let msg = LockDependenciesMessage::Metadata { metadata };
+        let msg = LockfileContentsMessage::Metadata { metadata };
         gctx.shell().print_json(&msg)?;
     }
 
@@ -108,7 +108,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
         .collect::<Result<Vec<_>, _>>()?;
     if !unused.is_empty() {
         let unused = NormalizedPatch { unused };
-        let msg = LockDependenciesMessage::UnusedPatches { unused };
+        let msg = LockfileContentsMessage::UnusedPatches { unused };
         gctx.shell().print_json(&msg)?;
     }
 

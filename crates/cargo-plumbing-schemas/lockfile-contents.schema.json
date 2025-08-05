@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ReadLockfileMessage",
-  "description": "Represents the messages outputted by the `cargo-plumbing read-lockfile` command.\n\n This enum captures all possible JSON objects that the command can emit. The `reason`\n field acts as a discriminant to distinguish between different message types.",
+  "title": "LockfileContentsMessage",
+  "description": "Messages used to output the contents of a lockfile.",
   "oneOf": [
     {
       "type": "object",

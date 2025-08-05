@@ -1,4 +1,4 @@
-//! Messages used by `cargo plumbing read-lockfile` command
+//! Messages for outputting lockfile contents
 
 use std::io::Read;
 use std::marker::PhantomData;
@@ -8,15 +8,12 @@ use serde::{Deserialize, Serialize};
 use crate::lockfile::{Metadata, NormalizedDependency, NormalizedPatch};
 use crate::MessageIter;
 
-/// Represents the messages outputted by the `cargo-plumbing read-lockfile` command.
-///
-/// This enum captures all possible JSON objects that the command can emit. The `reason`
-/// field acts as a discriminant to distinguish between different message types.
-#[derive(Deserialize, Serialize)]
+/// Messages used to output the contents of a lockfile.
+#[derive(Serialize, Deserialize)]
 #[serde(tag = "reason", rename_all = "kebab-case")]
 #[cfg_attr(feature = "unstable-schema", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
-pub enum ReadLockfileMessage {
+pub enum LockfileContentsMessage {
     Lockfile {
         version: Option<u32>,
     },
@@ -33,8 +30,8 @@ pub enum ReadLockfileMessage {
     },
 }
 
-impl ReadLockfileMessage {
-    /// Creates an iterator to parse a stream of [`ReadLockfileMessage`]s.
+impl LockfileContentsMessage {
+    /// Creates an iterator to parse a stream of [`LockfileContentsMessage`]s.
     pub fn parse_stream<R: Read>(input: R) -> MessageIter<R, Self> {
         MessageIter {
             input,
@@ -45,8 +42,11 @@ impl ReadLockfileMessage {
 
 #[cfg(feature = "unstable-schema")]
 #[test]
-fn dump_read_lockfile_schema() {
-    let schema = schemars::schema_for!(ReadLockfileMessage);
+fn dump_lockfile_contents_schema() {
+    let schema = schemars::schema_for!(LockfileContentsMessage);
     let dump = serde_json::to_string_pretty(&schema).unwrap();
-    snapbox::assert_data_eq!(dump, snapbox::file!("../read-lockfile.schema.json").raw());
+    snapbox::assert_data_eq!(
+        dump,
+        snapbox::file!("../lockfile-contents.schema.json").raw()
+    );
 }

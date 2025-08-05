@@ -6,7 +6,7 @@ use anyhow::Context as _;
 use cargo::util::Filesystem;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::cargo::core::resolver::encode::EncodableResolve;
-use cargo_plumbing_schemas::read_lockfile::ReadLockfileMessage;
+use cargo_plumbing_schemas::lockfile_contents::LockfileContentsMessage;
 
 #[derive(Debug, clap::Args)]
 pub(crate) struct Args {
@@ -34,20 +34,20 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
 
     let v: EncodableResolve = toml::from_str(&lock_s)?;
     gctx.shell()
-        .print_json(&ReadLockfileMessage::Lockfile { version: v.version })?;
+        .print_json(&LockfileContentsMessage::Lockfile { version: v.version })?;
 
     let n = v.normalize()?;
     for package in n.package {
         gctx.shell()
-            .print_json(&ReadLockfileMessage::LockedPackage { package })?;
+            .print_json(&LockfileContentsMessage::LockedPackage { package })?;
     }
     if !n.patch.is_empty() {
         gctx.shell()
-            .print_json(&ReadLockfileMessage::UnusedPatches { unused: n.patch })?;
+            .print_json(&LockfileContentsMessage::UnusedPatches { unused: n.patch })?;
     }
     if let Some(metadata) = n.metadata {
         gctx.shell()
-            .print_json(&ReadLockfileMessage::Metadata { metadata })?;
+            .print_json(&LockfileContentsMessage::Metadata { metadata })?;
     }
 
     Ok(())

@@ -5,8 +5,8 @@ use anyhow::Context;
 use cargo::core::SourceKind;
 use cargo::util::Filesystem;
 use cargo::{CargoResult, GlobalContext};
-use cargo_plumbing_schemas::lock_dependencies::LockDependenciesMessage;
 use cargo_plumbing_schemas::lockfile::{NormalizedDependency, Precise};
+use cargo_plumbing_schemas::lockfile_contents::LockfileContentsMessage;
 use url::Url;
 
 #[derive(Debug, clap::Args)]
@@ -29,7 +29,7 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
         anyhow::bail!("input must be piped from a file or another command");
     }
 
-    let messages = LockDependenciesMessage::parse_stream(BufReader::new(stdin));
+    let messages = LockfileContentsMessage::parse_stream(BufReader::new(stdin));
 
     let mut lock_version: Option<u32> = None;
     let mut locked_packages = Vec::new();
@@ -37,9 +37,9 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
 
     for message in messages {
         match message? {
-            LockDependenciesMessage::Lockfile { version } => lock_version = version,
-            LockDependenciesMessage::LockedPackage { package } => locked_packages.push(package),
-            LockDependenciesMessage::UnusedPatches { unused } => unused_patches = Some(unused),
+            LockfileContentsMessage::Lockfile { version } => lock_version = version,
+            LockfileContentsMessage::LockedPackage { package } => locked_packages.push(package),
+            LockfileContentsMessage::UnusedPatches { unused } => unused_patches = Some(unused),
             _ => {}
         }
     }
