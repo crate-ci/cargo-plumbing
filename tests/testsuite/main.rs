@@ -3,11 +3,13 @@ mod cargo_plumbing_locate_manifest;
 mod cargo_plumbing_lock_dependencies;
 mod cargo_plumbing_read_lockfile;
 mod cargo_plumbing_read_manifest;
+mod cargo_plumbing_resolve_features;
 mod cargo_plumbing_write_lockfile;
 mod locate_manifest;
 mod lock_dependencies;
 mod read_lockfile;
 mod read_manifest;
+mod resolve_features;
 mod write_lockfile;
 
 use cargo_test_support::{execs, process, ArgLineCommandExt, Execs, Project, TestEnvCommandExt};

@@ -4,6 +4,7 @@ pub(crate) mod locate_manifest;
 pub(crate) mod lock_dependencies;
 pub(crate) mod read_lockfile;
 pub(crate) mod read_manifest;
+pub(crate) mod resolve_features;
 pub(crate) mod write_lockfile;
 
 #[derive(Debug, clap::Subcommand)]
@@ -24,6 +25,9 @@ pub(crate) enum Plumbing {
     /// Write the lockfile
     #[command()]
     WriteLockfile(write_lockfile::Args),
+    /// Resolve features
+    #[command()]
+    ResolveFeatures(resolve_features::Args),
 }
 
 impl Plumbing {
@@ -34,6 +38,7 @@ impl Plumbing {
             Self::ReadManifest(args) => read_manifest::exec(gctx, args),
             Self::LockDependencies(args) => lock_dependencies::exec(gctx, args),
             Self::WriteLockfile(args) => write_lockfile::exec(gctx, args),
+            Self::ResolveFeatures(args) => resolve_features::exec(gctx, args),
         }
     }
 }
