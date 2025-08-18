@@ -2,6 +2,7 @@ use cargo::{CargoResult, GlobalContext};
 
 pub(crate) mod locate_manifest;
 pub(crate) mod lock_dependencies;
+pub(crate) mod plan_build;
 pub(crate) mod read_lockfile;
 pub(crate) mod read_manifest;
 pub(crate) mod resolve_features;
@@ -28,6 +29,9 @@ pub(crate) enum Plumbing {
     /// Resolve features
     #[command()]
     ResolveFeatures(resolve_features::Args),
+    /// Plan a build by creating the unit graph
+    #[command()]
+    PlanBuild(plan_build::Args),
 }
 
 impl Plumbing {
@@ -39,6 +43,7 @@ impl Plumbing {
             Self::LockDependencies(args) => lock_dependencies::exec(gctx, args),
             Self::WriteLockfile(args) => write_lockfile::exec(gctx, args),
             Self::ResolveFeatures(args) => resolve_features::exec(gctx, args),
+            Self::PlanBuild(args) => plan_build::exec(gctx, args),
         }
     }
 }
