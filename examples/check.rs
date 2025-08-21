@@ -95,10 +95,18 @@ fn run(args: &Args) -> CargoResult<()> {
     };
 
     let lockfile_path = args.lockfile_path.clone().unwrap_or_else(|| {
-        let parent = match manifests.last().unwrap() {
-            ReadManifestOut::Manifest { path, .. } => path.parent().unwrap(),
-        };
-        parent.join("Cargo.lock")
+        let ws_manifest = manifests.iter().find(|m| {
+            matches!(
+                m,
+                ReadManifestOut::Manifest {
+                    workspace: true,
+                    ..
+                }
+            )
+        });
+
+        let ReadManifestOut::Manifest { path, .. } = ws_manifest.unwrap();
+        path.join("Cargo.lock")
     });
 
     let lockfile = {

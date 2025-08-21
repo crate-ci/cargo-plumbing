@@ -15,6 +15,7 @@ use crate::MessageIter;
 pub enum ReadManifestOut {
     /// A message containing the contents of a parsed `Cargo.toml` manifest.
     Manifest {
+        workspace: bool,
         /// The path to the manifest file that was read.
         path: PathBuf,
         /// The package ID specification.

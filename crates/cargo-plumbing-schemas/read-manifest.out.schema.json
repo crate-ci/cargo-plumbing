@@ -7,6 +7,9 @@
       "description": "A message containing the contents of a parsed `Cargo.toml` manifest.",
       "type": "object",
       "properties": {
+        "workspace": {
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the manifest file that was read.",
           "type": "string"
@@ -29,6 +32,7 @@
       },
       "required": [
         "reason",
+        "workspace",
         "path",
         "manifest"
       ]

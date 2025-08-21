@@ -28,11 +28,13 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
         // Here, we print the root Package or the Virtual Manifest of the workspace.
         let msg = match workspace.root_maybe() {
             MaybePackage::Package(pkg) => ReadManifestOut::Manifest {
+                workspace: true,
                 path: gctx.cwd().join(pkg.manifest_path()),
                 pkg_id: Some(pkg.package_id().to_spec()),
                 manifest: pkg.manifest().normalized_toml().clone(),
             },
             MaybePackage::Virtual(v) => ReadManifestOut::Manifest {
+                workspace: true,
                 path: gctx.cwd().join(workspace.root_manifest()),
                 pkg_id: None,
                 manifest: v.normalized_toml().clone(),
@@ -48,6 +50,7 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
             .filter(|p| p.manifest_path() != workspace.root_manifest())
         {
             let msg = ReadManifestOut::Manifest {
+                workspace: false,
                 path: gctx.cwd().join(member.manifest_path()),
                 pkg_id: Some(member.package_id().to_spec()),
                 manifest: member.manifest().normalized_toml().clone(),
@@ -70,13 +73,6 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
                     v.normalized_toml().clone(),
                 ),
             };
-
-        let msg = ReadManifestOut::Manifest {
-            path: requested_manifest_path.clone(),
-            pkg_id,
-            manifest,
-        };
-        gctx.shell().print_json(&msg)?;
 
         // If the current manifest is a workspace member, find its workspace manifest path.
         let ws_manifest_path = match ws_config {
@@ -103,6 +99,14 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
             }
         };
 
+        let msg = ReadManifestOut::Manifest {
+            workspace: ws_manifest_path.is_none(),
+            path: requested_manifest_path.clone(),
+            pkg_id,
+            manifest,
+        };
+        gctx.shell().print_json(&msg)?;
+
         if let Some(ws_manifest_path) = ws_manifest_path {
             let ws_manifest_path = paths::normalize_path(&gctx.cwd().join(ws_manifest_path));
             let source_id = SourceId::for_manifest_path(&ws_manifest_path)?;
@@ -115,6 +119,7 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
             };
 
             let msg = ReadManifestOut::Manifest {
+                workspace: true,
                 path: ws_manifest_path.clone(),
                 pkg_id,
                 manifest,
