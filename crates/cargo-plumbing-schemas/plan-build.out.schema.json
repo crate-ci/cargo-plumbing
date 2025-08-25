@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlanBuildOut",
+  "description": "Output messages for `cargo-plumbing plan-build`.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/PackageIdSpec"
+        },
+        "target": {
+          "$ref": "#/$defs/UnitTarget"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "deps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitDependency"
+          }
+        },
+        "root": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "const": "unit"
+        }
+      },
+      "required": [
+        "reason",
+        "id",
+        "target",
+        "platform"
+      ]
+    }
+  ],
+  "$defs": {
+    "PackageIdSpec": {
+      "type": "string"
+    },
+    "UnitTarget": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "crate_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "edition": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "src_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "test": {
+          "type": "boolean"
+        },
+        "doctest": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "crate_types",
+        "edition",
+        "kind",
+        "test",
+        "doctest"
+      ]
+    },
+    "UnitDependency": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "extern_crate_name": {
+          "type": "string"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "noprelude": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "extern_crate_name"
+      ]
+    }
+  }
+}
