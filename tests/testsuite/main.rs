@@ -7,6 +7,7 @@ mod cargo_plumbing_resolve_features;
 mod cargo_plumbing_write_lockfile;
 mod locate_manifest;
 mod lock_dependencies;
+mod plan_build;
 mod read_lockfile;
 mod read_manifest;
 mod resolve_features;
