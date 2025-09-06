@@ -28,6 +28,26 @@
         "features_for",
         "features"
       ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "const": "target"
+        }
+      },
+      "required": [
+        "reason",
+        "name",
+        "kind"
+      ]
     }
   ],
   "$defs": {

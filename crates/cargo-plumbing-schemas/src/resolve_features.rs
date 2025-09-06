@@ -1,7 +1,9 @@
 use std::io::Read;
 use std::marker::PhantomData;
 
+use camino::Utf8PathBuf;
 use cargo_util_schemas::core::PackageIdSpec;
+use cargo_util_schemas::manifest::TomlManifest;
 use serde::{Deserialize, Serialize};
 
 use crate::lockfile::{NormalizedDependency, NormalizedPatch};
@@ -14,8 +16,22 @@ use crate::MessageIter;
 #[allow(clippy::large_enum_variant)]
 pub enum ResolveFeaturesIn {
     Manifest {
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        workspace: bool,
+        /// The path to the manifest file that was read.
         #[cfg_attr(feature = "unstable-schema", schemars(with = "String"))]
-        id: PackageIdSpec,
+        path: Utf8PathBuf,
+        /// The package ID specification.
+        ///
+        /// This command also outputs virtual manifests and virtual manifests don't have
+        /// [`PackageIdSpec`], hence the use of [`Option`].
+        #[cfg_attr(
+            feature = "unstable-schema",
+            schemars(with = "Option<String>", description = "The package ID specification")
+        )]
+        pkg_id: Option<PackageIdSpec>,
+        /// The fully parsed and deserialized manifest content.
+        manifest: TomlManifest,
     },
     LockedPackage {
         #[serde(flatten)]
@@ -46,6 +62,10 @@ pub enum ResolveFeaturesOut {
         features_for: String,
         #[serde(skip_serializing_if = "Vec::is_empty")]
         features: Vec<String>,
+    },
+    Target {
+        name: String,
+        kind: String,
     },
 }
 

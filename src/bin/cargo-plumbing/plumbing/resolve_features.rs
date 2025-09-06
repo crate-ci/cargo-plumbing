@@ -29,17 +29,39 @@ pub(crate) struct Args {
     /// Do not activate the `default` feature
     #[arg(long)]
     no_default_features: bool,
-    /// Include dev units
-    //
-    // HACK: We're asking the users if they want to include dev units or not. Ideally this should
-    // be done through stdin messages. However, due to cargo API limitations, this workaround is necessary
-    //
-    // See: https://github.com/crate-ci/cargo-plumbing/pull/68#discussion_r2277484208
-    #[arg(long, default_value_t = false)]
-    dev_units: bool,
     /// Target triple
     #[arg(long)]
     target: Vec<String>,
+    /// Include this package's library
+    #[arg(long)]
+    lib: bool,
+    /// Include all binaries
+    #[arg(long)]
+    bins: bool,
+    /// Include only the specified binaries
+    #[arg(long)]
+    bin: Vec<String>,
+    /// Include all examples
+    #[arg(long)]
+    examples: bool,
+    /// Include only the specified examples
+    #[arg(long)]
+    example: Vec<String>,
+    /// Include all tests
+    #[arg(long)]
+    tests: bool,
+    /// Include only the specified tests
+    #[arg(long)]
+    test: Vec<String>,
+    /// Include all benches
+    #[arg(long)]
+    benches: bool,
+    /// Include only the specified benches
+    #[arg(long)]
+    bench: Vec<String>,
+    /// Include all targets
+    #[arg(long)]
+    all_targets: bool,
 }
 
 pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
@@ -60,6 +82,7 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
 
     let messages = ResolveFeaturesIn::parse_stream(BufReader::new(stdin));
 
+    let mut ws_manifest = None;
     let mut locked_packages = Vec::new();
     let mut unused_patches = None;
     let mut specs = Vec::new();
@@ -68,26 +91,162 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
         match message? {
             ResolveFeaturesIn::LockedPackage { package } => locked_packages.push(package),
             ResolveFeaturesIn::UnusedPatches { unused } => unused_patches = Some(unused),
-            ResolveFeaturesIn::Manifest { id } => specs.push(id),
+            ResolveFeaturesIn::Manifest {
+                pkg_id,
+                manifest,
+                workspace,
+                ..
+            } => {
+                if workspace {
+                    if ws_manifest.is_some() {
+                        anyhow::bail!("duplicate workspace manifest input.");
+                    }
+                    ws_manifest = Some(manifest);
+                }
+                if let Some(id) = pkg_id {
+                    specs.push(id);
+                }
+            }
         }
     }
 
     if locked_packages.is_empty() {
         anyhow::bail!("incomplete input. no packages found.");
     }
+    let Some(ws_manifest) = ws_manifest else {
+        anyhow::bail!("missing workspace manifest input.")
+    };
+
+    let mut requested_features = args.features;
+    if let Some(bins) = ws_manifest.bin {
+        let bins = bins
+            .into_iter()
+            .filter(|bin| {
+                args.all_targets
+                    || args.bins
+                    || bin
+                        .name
+                        .as_ref()
+                        .map(|name| args.bin.contains(name))
+                        .unwrap_or(false)
+            })
+            .collect::<Vec<_>>();
+        for bin in bins.iter() {
+            if let Some(name) = &bin.name {
+                gctx.shell().print_json(&ResolveFeaturesOut::Target {
+                    name: name.clone(),
+                    kind: "bin".to_owned(),
+                })?;
+            }
+        }
+        let bins = bins
+            .into_iter()
+            .filter_map(|bin| bin.required_features)
+            .flatten()
+            .collect::<Vec<_>>();
+        requested_features.extend(bins);
+    }
+    if let Some(tests) = ws_manifest.test {
+        let tests = tests
+            .into_iter()
+            .filter(|test| {
+                args.all_targets
+                    || args.tests
+                    || test
+                        .name
+                        .as_ref()
+                        .map(|name| args.test.contains(name))
+                        .unwrap_or(false)
+            })
+            .collect::<Vec<_>>();
+        for test in tests.iter() {
+            if let Some(name) = &test.name {
+                gctx.shell().print_json(&ResolveFeaturesOut::Target {
+                    name: name.clone(),
+                    kind: "test".to_owned(),
+                })?;
+            }
+        }
+        let tests = tests
+            .into_iter()
+            .filter_map(|test| test.required_features)
+            .flatten()
+            .collect::<Vec<_>>();
+        requested_features.extend(tests);
+    }
+    if let Some(benches) = ws_manifest.bench {
+        let benches = benches
+            .into_iter()
+            .filter(|bench| {
+                args.all_targets
+                    || args.benches
+                    || bench
+                        .name
+                        .as_ref()
+                        .map(|name| args.bench.contains(name))
+                        .unwrap_or(false)
+            })
+            .collect::<Vec<_>>();
+        for bench in benches.iter() {
+            if let Some(name) = &bench.name {
+                gctx.shell().print_json(&ResolveFeaturesOut::Target {
+                    name: name.clone(),
+                    kind: "bench".to_owned(),
+                })?;
+            }
+        }
+        let benches = benches
+            .into_iter()
+            .filter_map(|bench| bench.required_features)
+            .flatten()
+            .collect::<Vec<_>>();
+        requested_features.extend(benches);
+    }
+    if let Some(examples) = ws_manifest.example {
+        let examples = examples
+            .into_iter()
+            .filter(|example| {
+                args.all_targets
+                    || args.examples
+                    || example
+                        .name
+                        .as_ref()
+                        .map(|name| args.example.contains(name))
+                        .unwrap_or(false)
+            })
+            .collect::<Vec<_>>();
+        for example in examples.iter() {
+            if let Some(name) = &example.name {
+                gctx.shell().print_json(&ResolveFeaturesOut::Target {
+                    name: name.clone(),
+                    kind: "example".to_owned(),
+                })?;
+            }
+        }
+        let examples = examples
+            .into_iter()
+            .filter_map(|example| example.required_features)
+            .flatten()
+            .collect::<Vec<_>>();
+        requested_features.extend(examples);
+    }
 
     let resolve = into_resolve(&ws, locked_packages, unused_patches.unwrap_or_default())?;
     let cli_features = CliFeatures::from_command_line(
-        &args.features,
+        &requested_features,
         args.all_features,
         !args.no_default_features,
     )?;
 
-    // HACK: We're asking the users if they want to include dev units or not. Ideally this should
-    // be done through stdin messages. However, due to cargo API limitations, this workaround is necessary
-    //
-    // See: https://github.com/crate-ci/cargo-plumbing/pull/68#discussion_r2277484208
-    let has_dev_units = if args.dev_units {
+    // Determine if we should include dev units from the selected targets.
+    let has_dev_units = if args.examples
+        || args.tests
+        || args.benches
+        || !args.example.is_empty()
+        || !args.test.is_empty()
+        || !args.bench.is_empty()
+        || args.all_targets
+    {
         HasDevUnits::Yes
     } else {
         HasDevUnits::No

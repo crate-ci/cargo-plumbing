@@ -5,7 +5,6 @@ use std::process::{Command, Stdio};
 use cargo::CargoResult;
 use cargo_plumbing_schemas::locate_manifest::LocateManifestOut;
 use cargo_plumbing_schemas::read_manifest::ReadManifestOut;
-use cargo_plumbing_schemas::resolve_features::ResolveFeaturesIn;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -173,26 +172,9 @@ fn run(args: &Args) -> CargoResult<()> {
         child.wait().expect("failed to wait for lock-dependencies");
     }
 
-    // HACK: We determine if we should include dev units or not. This workaround is implemented due
-    // to cargo API limitations.
-    //
-    // See: https://github.com/crate-ci/cargo-plumbing/pull/68#discussion_r2277484208
-    let has_dev_units = args.examples
-        || args.tests
-        || args.benches
-        || !args.example.is_empty()
-        || !args.test.is_empty()
-        || !args.bench.is_empty()
-        || args.all_targets;
-
     let _features = {
         let ids = manifests
             .into_iter()
-            .filter_map(|manifest| match manifest {
-                ReadManifestOut::Manifest { pkg_id, .. } => {
-                    pkg_id.map(|id| ResolveFeaturesIn::Manifest { id })
-                }
-            })
             .map(|msg| serde_json::to_string(&msg))
             .collect::<Result<Vec<_>, _>>()?
             .join("\n");
@@ -202,9 +184,21 @@ fn run(args: &Args) -> CargoResult<()> {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped());
 
-        if has_dev_units {
-            cmd.arg("--dev-units");
+        if args.examples {
+            cmd.arg("--examples");
         }
+        if args.tests {
+            cmd.arg("--tests");
+        }
+        if args.benches {
+            cmd.arg("--benches");
+        }
+        if args.all_targets {
+            cmd.arg("--all-targets");
+        }
+        cmd.args(["--example", &args.example.join(",")]);
+        cmd.args(["--test", &args.test.join(",")]);
+        cmd.args(["--bench", &args.bench.join(",")]);
 
         let mut child = cmd.spawn().expect("failed to spawn resolve-features");
 

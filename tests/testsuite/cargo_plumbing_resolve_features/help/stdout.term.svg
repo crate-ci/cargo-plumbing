@@ -1,4 +1,4 @@
-<svg width="740px" height="326px" xmlns="http://www.w3.org/2000/svg">
+<svg width="740px" height="488px" xmlns="http://www.w3.org/2000/svg">
   <style>
     .fg { fill: #AAAAAA }
     .bg { background: #000000 }
@@ -42,13 +42,31 @@
 </tspan>
     <tspan x="10px" y="244px"><tspan>      --no-default-features            Do not activate the `default` feature</tspan>
 </tspan>
-    <tspan x="10px" y="262px"><tspan>      --dev-units                      Include dev units</tspan>
+    <tspan x="10px" y="262px"><tspan>      --target &lt;TARGET&gt;                Target triple</tspan>
 </tspan>
-    <tspan x="10px" y="280px"><tspan>      --target &lt;TARGET&gt;                Target triple</tspan>
+    <tspan x="10px" y="280px"><tspan>      --lib                            Include this package's library</tspan>
 </tspan>
-    <tspan x="10px" y="298px"><tspan>  -h, --help                           Print help</tspan>
+    <tspan x="10px" y="298px"><tspan>      --bins                           Include all binaries</tspan>
 </tspan>
-    <tspan x="10px" y="316px">
+    <tspan x="10px" y="316px"><tspan>      --bin &lt;BIN&gt;                      Include only the specified binaries</tspan>
+</tspan>
+    <tspan x="10px" y="334px"><tspan>      --examples                       Include all examples</tspan>
+</tspan>
+    <tspan x="10px" y="352px"><tspan>      --example &lt;EXAMPLE&gt;              Include only the specified examples</tspan>
+</tspan>
+    <tspan x="10px" y="370px"><tspan>      --tests                          Include all tests</tspan>
+</tspan>
+    <tspan x="10px" y="388px"><tspan>      --test &lt;TEST&gt;                    Include only the specified tests</tspan>
+</tspan>
+    <tspan x="10px" y="406px"><tspan>      --benches                        Include all benches</tspan>
+</tspan>
+    <tspan x="10px" y="424px"><tspan>      --bench &lt;BENCH&gt;                  Include only the specified benches</tspan>
+</tspan>
+    <tspan x="10px" y="442px"><tspan>      --all-targets                    Include all targets</tspan>
+</tspan>
+    <tspan x="10px" y="460px"><tspan>  -h, --help                           Print help</tspan>
+</tspan>
+    <tspan x="10px" y="478px">
 </tspan>
   </text>
 
