@@ -132,15 +132,7 @@ pub struct EncodableSourceId {
 }
 
 impl EncodableSourceId {
-    pub fn new(url: Url, precise: Option<&'static str>, kind: SourceKind) -> Self {
-        Self {
-            url,
-            kind,
-            precise: precise.map(|s| s.to_owned()),
-        }
-    }
-
-    pub fn from_url(string: &str) -> CargoResult<Self> {
+    pub fn new(string: &str) -> CargoResult<Self> {
         let (kind, url) = string
             .split_once('+')
             .ok_or_else(|| anyhow::format_err!("invalid source `{}`", string))?;
@@ -233,7 +225,7 @@ impl<'de> Deserialize<'de> for EncodableSourceId {
         D: de::Deserializer<'de>,
     {
         let string = String::deserialize(d)?;
-        Self::from_url(&string).map_err(de::Error::custom)
+        Self::new(&string).map_err(de::Error::custom)
     }
 }
 
@@ -267,7 +259,7 @@ impl FromStr for EncodablePackageId {
         let source_id = match s.next() {
             Some(s) => {
                 if let Some(s) = s.strip_prefix('(').and_then(|s| s.strip_suffix(')')) {
-                    Some(EncodableSourceId::from_url(s)?)
+                    Some(EncodableSourceId::new(s)?)
                 } else {
                     anyhow::bail!("invalid serialized PackageId")
                 }
@@ -415,18 +407,13 @@ pub fn encodable_source_id(id: SourceId, version: ResolveVersion) -> Option<Enco
     if id.is_path() {
         None
     } else {
-        Some(if version >= ResolveVersion::V4 {
-            EncodableSourceId::new(
-                id.url().clone(),
-                id.precise_git_fragment(),
-                id.kind().clone(),
-            )
-        } else {
-            EncodableSourceId::new(
-                id.url().clone(),
-                id.precise_git_fragment(),
-                id.kind().clone(),
-            )
-        })
+        Some(
+            if version >= ResolveVersion::V4 {
+                EncodableSourceId::new(&id.as_url().to_string())
+            } else {
+                EncodableSourceId::new(&id.as_url().to_string())
+            }
+            .unwrap(),
+        )
     }
 }
