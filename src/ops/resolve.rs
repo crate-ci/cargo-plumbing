@@ -347,7 +347,10 @@ pub fn normalize_dependency(dep: EncodableDependency) -> CargoResult<NormalizedD
     let mut source = None;
 
     if let Some(s) = dep.source {
-        id = id.with_url(s.url.clone()).with_kind(s.kind.clone());
+        let mut url = s.url.clone();
+        url.set_fragment(None);
+        url.set_query(None);
+        id = id.with_url(url).with_kind(s.kind.clone());
         source = Some(s);
     }
 
@@ -366,7 +369,7 @@ pub fn normalize_dependency(dep: EncodableDependency) -> CargoResult<NormalizedD
     };
 
     let rev = match source {
-        Some(s) if matches!(s.kind, SourceKind::Git(..)) => s.precise,
+        Some(s) if matches!(s.kind, SourceKind::Git(..)) => s.url.fragment().map(|f| f.to_owned()),
         _ => None,
     };
 
@@ -388,7 +391,10 @@ pub fn normalize_package_id(package_id: EncodablePackageId) -> CargoResult<Packa
     }
 
     if let Some(source) = package_id.source {
-        id = id.with_url(source.url).with_kind(source.kind);
+        let mut url = source.url.clone();
+        url.set_fragment(None);
+        url.set_query(None);
+        id = id.with_url(url).with_kind(source.kind);
     }
 
     Ok(id)
