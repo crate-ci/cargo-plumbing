@@ -129,7 +129,6 @@ pub struct EncodableSourceId {
     pub kind: SourceKind,
     pub url: Url,
     pub precise: Option<String>,
-    pub encoded: bool,
 }
 
 impl EncodableSourceId {
@@ -137,16 +136,6 @@ impl EncodableSourceId {
         Self {
             url,
             kind,
-            encoded: true,
-            precise: precise.map(|s| s.to_owned()),
-        }
-    }
-
-    pub fn without_url_encoded(url: Url, precise: Option<&'static str>, kind: SourceKind) -> Self {
-        Self {
-            url,
-            kind,
-            encoded: false,
             precise: precise.map(|s| s.to_owned()),
         }
     }
@@ -166,7 +155,6 @@ impl EncodableSourceId {
                 Ok(Self {
                     url,
                     kind: SourceKind::Git(reference),
-                    encoded: false,
                     precise,
                 })
             }
@@ -175,7 +163,6 @@ impl EncodableSourceId {
                 Ok(Self {
                     url,
                     kind: SourceKind::Registry,
-                    encoded: false,
                     precise: None,
                 })
             }
@@ -184,7 +171,6 @@ impl EncodableSourceId {
                 Ok(Self {
                     url,
                     kind: SourceKind::SparseRegistry,
-                    encoded: false,
                     precise: None,
                 })
             }
@@ -193,7 +179,6 @@ impl EncodableSourceId {
                 Ok(Self {
                     url,
                     kind: SourceKind::Path,
-                    encoded: false,
                     precise: None,
                 })
             }
@@ -437,7 +422,7 @@ pub fn encodable_source_id(id: SourceId, version: ResolveVersion) -> Option<Enco
                 id.kind().clone(),
             )
         } else {
-            EncodableSourceId::without_url_encoded(
+            EncodableSourceId::new(
                 id.url().clone(),
                 id.precise_git_fragment(),
                 id.kind().clone(),
