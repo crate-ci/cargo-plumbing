@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlanBuildOut",
+  "description": "Output messages for `cargo-plumbing plan-build`.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "target": {
+          "$ref": "#/$defs/UnitTarget"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "deps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitDependency"
+          }
+        },
+        "root": {
+          "type": "boolean"
+        },
+        "profile": {
+          "$ref": "#/$defs/UnitProfile"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "const": "unit"
+        }
+      },
+      "required": [
+        "reason",
+        "id",
+        "target",
+        "platform",
+        "profile",
+        "features"
+      ]
+    }
+  ],
+  "$defs": {
+    "UnitTarget": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "crate_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "edition": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "src_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "test": {
+          "type": "boolean"
+        },
+        "doctest": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "crate_types",
+        "edition",
+        "kind",
+        "test",
+        "doctest"
+      ]
+    },
+    "UnitDependency": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "extern_crate_name": {
+          "type": "string"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "noprelude": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "extern_crate_name"
+      ]
+    },
+    "UnitProfile": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "opt_level": {
+          "type": "string"
+        },
+        "lto": {
+          "type": "string"
+        },
+        "codegen_units": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "debuginfo": {
+          "$ref": "#/$defs/TomlDebugInfo"
+        },
+        "debug_assertions": {
+          "type": "boolean"
+        },
+        "overflow_checks": {
+          "type": "boolean"
+        },
+        "rpath": {
+          "type": "boolean"
+        },
+        "incremental": {
+          "type": "boolean"
+        },
+        "panic": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "opt_level",
+        "lto",
+        "debuginfo",
+        "debug_assertions",
+        "overflow_checks",
+        "rpath",
+        "incremental",
+        "panic"
+      ]
+    },
+    "TomlDebugInfo": {
+      "type": "string",
+      "enum": [
+        "None",
+        "LineDirectivesOnly",
+        "LineTablesOnly",
+        "Limited",
+        "Full"
+      ]
+    }
+  }
+}
