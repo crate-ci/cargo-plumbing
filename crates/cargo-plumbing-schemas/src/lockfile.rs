@@ -7,10 +7,8 @@
 //! future, they will be used for other lockfile-related commands, such as `lock-dependencies`
 //! and `write-lockfile`.
 
-use std::fmt;
-
 use cargo_util_schemas::core::PackageIdSpec;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -43,8 +41,7 @@ pub struct NormalizedDependency {
     #[cfg_attr(feature = "unstable-schema", schemars(with = "String"))]
     pub id: PackageIdSpec,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[cfg_attr(feature = "unstable-schema", schemars(with = "Option<String>"))]
-    pub rev: Option<Precise>,
+    pub rev: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub checksum: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -53,44 +50,4 @@ pub struct NormalizedDependency {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[cfg_attr(feature = "unstable-schema", schemars(with = "Option<String>"))]
     pub replace: Option<PackageIdSpec>,
-}
-
-#[derive(Eq, PartialEq, Clone, Debug, Hash, Ord, PartialOrd)]
-pub enum Precise {
-    Locked,
-    GitUrlFragment(String),
-}
-
-impl fmt::Display for Precise {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Precise::Locked => "locked".fmt(f),
-            Precise::GitUrlFragment(s) => s.fmt(f),
-        }
-    }
-}
-
-impl Serialize for Precise {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let s = self.to_string();
-        serializer.serialize_str(&s)
-    }
-}
-
-impl<'de> Deserialize<'de> for Precise {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-
-        if s == "locked" {
-            Ok(Precise::Locked)
-        } else {
-            Ok(Precise::GitUrlFragment(s))
-        }
-    }
 }

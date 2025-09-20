@@ -6,9 +6,7 @@ use cargo::core::{
 };
 use cargo::util::Graph;
 use cargo::CargoResult;
-use cargo_plumbing_schemas::lockfile::{
-    NormalizedDependency, NormalizedPatch, NormalizedResolve, Precise,
-};
+use cargo_plumbing_schemas::lockfile::{NormalizedDependency, NormalizedPatch, NormalizedResolve};
 
 use crate::cargo::core::resolver::encode::{
     build_path_deps, EncodableDependency, EncodablePackageId, EncodableResolve, Metadata, Patch,
@@ -191,7 +189,7 @@ pub fn get_path_deps_source_id<'a>(
 pub fn spec_to_id(
     spec: PackageIdSpec,
     source_id: Option<&SourceId>,
-    git_rev: Option<Precise>,
+    git_rev: Option<String>,
 ) -> CargoResult<Option<PackageId>> {
     if let Some(kind) = spec.kind() {
         if let Some(url) = spec.url() {
@@ -202,10 +200,8 @@ pub fn spec_to_id(
                     // means the GitReference from source itself may or may not have what we need.
                     // Therefore, we need a `git_rev` to construct the source ID.
                     SourceKind::Git(git_reference) => {
-                        let mut source_id = SourceId::for_git(url, git_reference.clone())?;
-                        if let Some(Precise::GitUrlFragment(fragment)) = git_rev {
-                            source_id = source_id.with_git_precise(Some(fragment));
-                        }
+                        let source_id = SourceId::for_git(url, git_reference.clone())?
+                            .with_git_precise(git_rev);
                         Ok(source_id)
                     }
                     SourceKind::Registry | SourceKind::SparseRegistry => {

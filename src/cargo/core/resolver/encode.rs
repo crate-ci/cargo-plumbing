@@ -12,7 +12,6 @@ use cargo::core::{
 };
 use cargo::util::interning::InternedString;
 use cargo::CargoResult;
-use cargo_plumbing_schemas::lockfile::Precise;
 use serde::{de, ser, Deserialize, Serialize};
 use url::Url;
 
@@ -129,7 +128,7 @@ pub struct EncodableDependency {
 pub struct EncodableSourceId {
     pub kind: SourceKind,
     pub url: Url,
-    pub precise: Option<Precise>,
+    pub precise: Option<String>,
     pub encoded: bool,
 }
 
@@ -139,13 +138,7 @@ impl EncodableSourceId {
             url,
             kind,
             encoded: true,
-            precise: precise.map(|s| {
-                if s == "locked" {
-                    Precise::Locked
-                } else {
-                    Precise::GitUrlFragment(s.to_owned())
-                }
-            }),
+            precise: precise.map(|s| s.to_owned()),
         }
     }
 
@@ -154,13 +147,7 @@ impl EncodableSourceId {
             url,
             kind,
             encoded: false,
-            precise: precise.map(|s| {
-                if s == "locked" {
-                    Precise::Locked
-                } else {
-                    Precise::GitUrlFragment(s.to_owned())
-                }
-            }),
+            precise: precise.map(|s| s.to_owned()),
         }
     }
 
@@ -180,7 +167,7 @@ impl EncodableSourceId {
                     url,
                     kind: SourceKind::Git(reference),
                     encoded: false,
-                    precise: precise.map(Precise::GitUrlFragment),
+                    precise,
                 })
             }
             "registry" => {
@@ -189,7 +176,7 @@ impl EncodableSourceId {
                     url,
                     kind: SourceKind::Registry,
                     encoded: false,
-                    precise: Some(Precise::Locked),
+                    precise: None,
                 })
             }
             "sparse" => {
@@ -198,7 +185,7 @@ impl EncodableSourceId {
                     url,
                     kind: SourceKind::SparseRegistry,
                     encoded: false,
-                    precise: Some(Precise::Locked),
+                    precise: None,
                 })
             }
             "path" => {
