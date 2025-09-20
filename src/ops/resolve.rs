@@ -6,9 +6,7 @@ use cargo::core::{
 };
 use cargo::util::Graph;
 use cargo::CargoResult;
-use cargo_plumbing_schemas::lockfile::{
-    NormalizedDependency, NormalizedPatch, NormalizedResolve, Precise,
-};
+use cargo_plumbing_schemas::lockfile::{NormalizedDependency, NormalizedPatch, NormalizedResolve};
 
 use crate::cargo::core::resolver::encode::{
     build_path_deps, EncodableDependency, EncodablePackageId, EncodableResolve, Metadata, Patch,
@@ -191,7 +189,7 @@ pub fn get_path_deps_source_id<'a>(
 pub fn spec_to_id(
     spec: PackageIdSpec,
     source_id: Option<&SourceId>,
-    git_rev: Option<Precise>,
+    git_rev: Option<String>,
 ) -> CargoResult<Option<PackageId>> {
     if let Some(kind) = spec.kind() {
         if let Some(url) = spec.url() {
@@ -202,10 +200,8 @@ pub fn spec_to_id(
                     // means the GitReference from source itself may or may not have what we need.
                     // Therefore, we need a `git_rev` to construct the source ID.
                     SourceKind::Git(git_reference) => {
-                        let mut source_id = SourceId::for_git(url, git_reference.clone())?;
-                        if let Some(Precise::GitUrlFragment(fragment)) = git_rev {
-                            source_id = source_id.with_git_precise(Some(fragment));
-                        }
+                        let source_id = SourceId::for_git(url, git_reference.clone())?
+                            .with_git_precise(git_rev);
                         Ok(source_id)
                     }
                     SourceKind::Registry | SourceKind::SparseRegistry => {
@@ -351,7 +347,10 @@ pub fn normalize_dependency(dep: EncodableDependency) -> CargoResult<NormalizedD
     let mut source = None;
 
     if let Some(s) = dep.source {
-        id = id.with_url(s.url.clone()).with_kind(s.kind.clone());
+        let mut url = s.url.clone();
+        url.set_fragment(None);
+        url.set_query(None);
+        id = id.with_url(url).with_kind(s.kind.clone());
         source = Some(s);
     }
 
@@ -370,7 +369,7 @@ pub fn normalize_dependency(dep: EncodableDependency) -> CargoResult<NormalizedD
     };
 
     let rev = match source {
-        Some(s) if matches!(s.kind, SourceKind::Git(..)) => s.precise,
+        Some(s) if matches!(s.kind, SourceKind::Git(..)) => s.url.fragment().map(|f| f.to_owned()),
         _ => None,
     };
 
@@ -392,7 +391,10 @@ pub fn normalize_package_id(package_id: EncodablePackageId) -> CargoResult<Packa
     }
 
     if let Some(source) = package_id.source {
-        id = id.with_url(source.url).with_kind(source.kind);
+        let mut url = source.url.clone();
+        url.set_fragment(None);
+        url.set_query(None);
+        id = id.with_url(url).with_kind(source.kind);
     }
 
     Ok(id)

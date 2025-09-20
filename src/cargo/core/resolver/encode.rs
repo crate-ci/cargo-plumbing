@@ -2,6 +2,7 @@
 //!
 //! This module is a temporary copy from the cargo codebase.
 
+use std::cmp::{Eq, Ordering, PartialEq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 use std::str::FromStr;
@@ -12,7 +13,6 @@ use cargo::core::{
 };
 use cargo::util::interning::InternedString;
 use cargo::CargoResult;
-use cargo_plumbing_schemas::lockfile::Precise;
 use serde::{de, ser, Deserialize, Serialize};
 use url::Url;
 
@@ -125,93 +125,41 @@ pub struct EncodableDependency {
     pub replace: Option<EncodablePackageId>,
 }
 
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct EncodableSourceId {
+    pub source_str: String,
     pub kind: SourceKind,
     pub url: Url,
-    pub precise: Option<Precise>,
-    pub encoded: bool,
 }
 
 impl EncodableSourceId {
-    pub fn new(url: Url, precise: Option<&'static str>, kind: SourceKind) -> Self {
-        Self {
-            url,
-            kind,
-            encoded: true,
-            precise: precise.map(|s| {
-                if s == "locked" {
-                    Precise::Locked
-                } else {
-                    Precise::GitUrlFragment(s.to_owned())
-                }
-            }),
-        }
-    }
-
-    pub fn without_url_encoded(url: Url, precise: Option<&'static str>, kind: SourceKind) -> Self {
-        Self {
-            url,
-            kind,
-            encoded: false,
-            precise: precise.map(|s| {
-                if s == "locked" {
-                    Precise::Locked
-                } else {
-                    Precise::GitUrlFragment(s.to_owned())
-                }
-            }),
-        }
-    }
-
-    pub fn from_url(string: &str) -> CargoResult<Self> {
-        let (kind, url) = string
+    pub fn new(source: String) -> CargoResult<Self> {
+        let source_str = source.clone();
+        let (kind, url) = source
             .split_once('+')
-            .ok_or_else(|| anyhow::format_err!("invalid source `{}`", string))?;
+            .ok_or_else(|| anyhow::format_err!("invalid URL"))?;
 
-        match kind {
+        let url = Url::parse(if kind == "sparse" { &source } else { url })
+            .map_err(|e| anyhow::format_err!("invalid url `{}`: {}", url, e))?;
+
+        let kind = match kind {
             "git" => {
-                let mut url = str_to_url(url)?;
                 let reference = GitReference::from_query(url.query_pairs());
-                let precise = url.fragment().map(|s| s.to_owned());
-                url.set_fragment(None);
-                url.set_query(None);
-                Ok(Self {
-                    url,
-                    kind: SourceKind::Git(reference),
-                    encoded: false,
-                    precise: precise.map(Precise::GitUrlFragment),
-                })
+                SourceKind::Git(reference)
             }
-            "registry" => {
-                let url = str_to_url(url)?;
-                Ok(Self {
-                    url,
-                    kind: SourceKind::Registry,
-                    encoded: false,
-                    precise: Some(Precise::Locked),
-                })
+            "registry" => SourceKind::Registry,
+            "sparse" => SourceKind::SparseRegistry,
+            "path" => SourceKind::Path,
+            kind => {
+                anyhow::bail!("unsupported source protocol: {}", kind);
             }
-            "sparse" => {
-                let url = str_to_url(string)?;
-                Ok(Self {
-                    url,
-                    kind: SourceKind::SparseRegistry,
-                    encoded: false,
-                    precise: Some(Precise::Locked),
-                })
-            }
-            "path" => {
-                let url = str_to_url(url)?;
-                Ok(Self {
-                    url,
-                    kind: SourceKind::Path,
-                    encoded: false,
-                    precise: None,
-                })
-            }
-            kind => Err(anyhow::format_err!("unsupported source protocol: {}", kind)),
-        }
+        };
+
+        Ok(Self {
+            source_str,
+            kind,
+            url,
+        })
     }
 
     fn is_path(&self) -> bool {
@@ -221,24 +169,7 @@ impl EncodableSourceId {
 
 impl fmt::Display for EncodableSourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(protocol) = self.kind.protocol() {
-            write!(f, "{protocol}+")?;
-        }
-        write!(f, "{}", self.url)?;
-        if let Self {
-            kind: SourceKind::Git(ref reference),
-            ref precise,
-            ..
-        } = self
-        {
-            if let Some(pretty) = reference.pretty_ref(true) {
-                write!(f, "?{pretty}")?;
-            }
-            if let Some(precise) = precise.as_ref() {
-                write!(f, "#{precise}")?;
-            }
-        }
-        Ok(())
+        write!(f, "{}", self.source_str)
     }
 }
 
@@ -261,7 +192,29 @@ impl<'de> Deserialize<'de> for EncodableSourceId {
         D: de::Deserializer<'de>,
     {
         let string = String::deserialize(d)?;
-        Self::from_url(&string).map_err(de::Error::custom)
+        Self::new(string).map_err(de::Error::custom)
+    }
+}
+
+impl PartialEq for EncodableSourceId {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind && self.url == other.url
+    }
+}
+
+impl Eq for EncodableSourceId {}
+
+impl PartialOrd for EncodableSourceId {
+    fn partial_cmp(&self, other: &EncodableSourceId) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for EncodableSourceId {
+    fn cmp(&self, other: &EncodableSourceId) -> Ordering {
+        self.kind
+            .cmp(&other.kind)
+            .then_with(|| self.url.cmp(&other.url))
     }
 }
 
@@ -295,7 +248,7 @@ impl FromStr for EncodablePackageId {
         let source_id = match s.next() {
             Some(s) => {
                 if let Some(s) = s.strip_prefix('(').and_then(|s| s.strip_suffix(')')) {
-                    Some(EncodableSourceId::from_url(s)?)
+                    Some(EncodableSourceId::new(s.to_owned())?)
                 } else {
                     anyhow::bail!("invalid serialized PackageId")
                 }
@@ -332,21 +285,6 @@ impl<'de> Deserialize<'de> for EncodablePackageId {
                 .map_err(de::Error::custom)
         })
     }
-}
-
-fn str_to_url(string: &str) -> CargoResult<Url> {
-    Url::parse(string).map_err(|s| {
-        if string.starts_with("git@") {
-            anyhow::format_err!(
-                "invalid url `{}`: {}; try using `{}` instead",
-                string,
-                s,
-                format_args!("ssh://{}", string.replacen(':', "/", 1))
-            )
-        } else {
-            anyhow::format_err!("invalid url `{}`: {}", string, s)
-        }
-    })
 }
 
 pub struct EncodeState<'a> {
@@ -443,18 +381,13 @@ pub fn encodable_source_id(id: SourceId, version: ResolveVersion) -> Option<Enco
     if id.is_path() {
         None
     } else {
-        Some(if version >= ResolveVersion::V4 {
-            EncodableSourceId::new(
-                id.url().clone(),
-                id.precise_git_fragment(),
-                id.kind().clone(),
-            )
-        } else {
-            EncodableSourceId::without_url_encoded(
-                id.url().clone(),
-                id.precise_git_fragment(),
-                id.kind().clone(),
-            )
-        })
+        Some(
+            if version >= ResolveVersion::V4 {
+                EncodableSourceId::new(id.as_url().to_string())
+            } else {
+                EncodableSourceId::new(id.as_url().to_string())
+            }
+            .unwrap(),
+        )
     }
 }
