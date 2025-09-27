@@ -5,7 +5,7 @@ use anyhow::Context;
 use cargo::core::SourceKind;
 use cargo::util::Filesystem;
 use cargo::{CargoResult, GlobalContext};
-use cargo_plumbing_schemas::lockfile::{NormalizedDependency, Precise};
+use cargo_plumbing_schemas::lockfile::NormalizedDependency;
 use cargo_plumbing_schemas::write_lockfile::WriteLockfileIn;
 use url::Url;
 
@@ -139,7 +139,7 @@ fn emit_package(package: NormalizedDependency, out: &mut String) {
     out.push('\n');
 }
 
-fn emit_source_value(url: &Url, kind: &SourceKind, rev: &Option<Precise>, out: &mut String) {
+fn emit_source_value(url: &Url, kind: &SourceKind, rev: &Option<String>, out: &mut String) {
     if let Some(protocol) = kind.protocol() {
         out.push_str(&format!("{protocol}+"));
     }

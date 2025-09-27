@@ -10,11 +10,12 @@ use cargo::ops::resolve_with_previous;
 use cargo::sources::SourceConfigMap;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::cargo::core::resolver::encode::{
-    encodable_resolve_node, encodable_source_id, EncodableDependency, EncodeState,
+    encodable_resolve_node, encodable_source_id, EncodeState,
 };
 use cargo_plumbing::ops::resolve::{into_resolve, normalize_dependency, normalize_packages};
 use cargo_plumbing_schemas::lock_dependencies::{LockDependenciesIn, LockDependenciesOut};
 use cargo_plumbing_schemas::lockfile::NormalizedPatch;
+use cargo_util_schemas::lockfile::TomlLockfileDependency;
 
 #[derive(Debug, clap::Args)]
 pub(crate) struct Args {
@@ -106,7 +107,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
         .unused_patches()
         .iter()
         .map(|id| {
-            normalize_dependency(EncodableDependency {
+            normalize_dependency(TomlLockfileDependency {
                 name: id.name().to_string(),
                 version: id.version().to_string(),
                 source: encodable_source_id(id.source_id(), resolve.version()),

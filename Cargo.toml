@@ -6,7 +6,7 @@ members = ["crates/*"]
 repository = "https://github.com/crate-ci/cargo-plumbing"
 license = "MIT OR Apache-2.0"
 edition = "2021"
-rust-version = "1.89.0"  # MSRV
+rust-version = "1.90.0"  # MSRV
 include = [
   "build.rs",
   "src/**/*",
@@ -151,6 +151,7 @@ camino.workspace = true
 cargo.workspace = true
 cargo-plumbing-schemas.workspace = true
 cargo-util.workspace = true
+cargo-util-schemas.workspace = true
 clap = { workspace = true, features = ["derive"] }
 clap-cargo.workspace = true
 semver.workspace = true

@@ -5,9 +5,9 @@ use std::path::PathBuf;
 use anyhow::Context as _;
 use cargo::util::Filesystem;
 use cargo::{CargoResult, GlobalContext};
-use cargo_plumbing::cargo::core::resolver::encode::EncodableResolve;
 use cargo_plumbing::ops::resolve::normalize_resolve;
 use cargo_plumbing_schemas::read_lockfile::ReadLockfileOut;
+use cargo_util_schemas::lockfile::TomlLockfile;
 
 #[derive(Debug, clap::Args)]
 pub(crate) struct Args {
@@ -33,7 +33,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
         .read_to_string(&mut lock_s)
         .with_context(|| format!("failed to read file: {}", lock_f.path().display()))?;
 
-    let v: EncodableResolve = toml::from_str(&lock_s)?;
+    let v: TomlLockfile = toml::from_str(&lock_s)?;
     let n = normalize_resolve(v)?;
 
     gctx.shell()
