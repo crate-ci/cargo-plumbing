@@ -99,7 +99,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
                 "test" => req_tests.push(name),
                 "bench" => req_benches.push(name),
                 "example" => req_examples.push(name),
-                _ => anyhow::bail!("unknown kind: {}", kind),
+                _ => anyhow::bail!("unknown kind: {kind}"),
             },
         }
     }
