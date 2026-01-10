@@ -483,13 +483,17 @@ fn workspace_package_with_inherited_deps() {
       "target": null,
       "test": [],
       "workspace": {
-        "default-members": null,
+        "default-members": [
+          "[ROOT]/foo/Cargo.toml"
+        ],
         "dependencies": {
           "a": "1.0.0"
         },
         "exclude": null,
         "lints": null,
-        "members": null,
+        "members": [
+          "[ROOT]/foo/Cargo.toml"
+        ],
         "metadata": null,
         "package": null,
         "resolver": "3"
@@ -755,14 +759,16 @@ fn workspace_package_with_members_globs() {
       "test": [],
       "workspace": {
         "default-members": [
-          "defaults/*"
+          "[ROOT]/foo/defaults/crate3/Cargo.toml"
         ],
         "dependencies": null,
         "exclude": null,
         "lints": null,
         "members": [
-          "crates/*",
-          "defaults/*"
+          "[ROOT]/foo/crates/crate1/Cargo.toml",
+          "[ROOT]/foo/crates/crate2/Cargo.toml",
+          "[ROOT]/foo/defaults/crate3/Cargo.toml",
+          "[ROOT]/foo/Cargo.toml"
         ],
         "metadata": null,
         "package": null,
@@ -1248,13 +1254,16 @@ fn workspace_package_with_members() {
       "target": null,
       "test": [],
       "workspace": {
-        "default-members": null,
+        "default-members": [
+          "[ROOT]/foo/Cargo.toml"
+        ],
         "dependencies": null,
         "exclude": null,
         "lints": null,
         "members": [
-          "crate1",
-          "crate2"
+          "[ROOT]/foo/crate1/Cargo.toml",
+          "[ROOT]/foo/crate2/Cargo.toml",
+          "[ROOT]/foo/Cargo.toml"
         ],
         "metadata": null,
         "package": null,
@@ -1554,13 +1563,16 @@ fn virtual_workspace_with_members() {
       "target": null,
       "test": null,
       "workspace": {
-        "default-members": null,
+        "default-members": [
+          "[ROOT]/foo/crate1/Cargo.toml",
+          "[ROOT]/foo/crate2/Cargo.toml"
+        ],
         "dependencies": null,
         "exclude": null,
         "lints": null,
         "members": [
-          "crate1",
-          "crate2"
+          "[ROOT]/foo/crate1/Cargo.toml",
+          "[ROOT]/foo/crate2/Cargo.toml"
         ],
         "metadata": null,
         "package": null,
@@ -2079,15 +2091,18 @@ fn workspace_member_with_inherited_deps() {
       "target": null,
       "test": [],
       "workspace": {
-        "default-members": null,
+        "default-members": [
+          "[ROOT]/foo/crate1/Cargo.toml"
+        ],
         "dependencies": {
           "a": "1.0.0"
         },
         "exclude": null,
         "lints": null,
         "members": [
-          "crate1",
-          "crate2"
+          "[ROOT]/foo/crate1/Cargo.toml",
+          "[ROOT]/foo/crate2/Cargo.toml",
+          "[ROOT]/foo/Cargo.toml"
         ],
         "metadata": null,
         "package": null,
@@ -2523,15 +2538,17 @@ fn workspace_member_via_package_workspace_key() {
       "target": null,
       "test": null,
       "workspace": {
-        "default-members": null,
+        "default-members": [
+          "[ROOT]/foo/crate1/Cargo.toml"
+        ],
         "dependencies": {
           "a": "1.0.0"
         },
         "exclude": null,
         "lints": null,
         "members": [
-          "../crate1",
-          "../crate2"
+          "[ROOT]/foo/crate1/Cargo.toml",
+          "[ROOT]/foo/crate2/Cargo.toml"
         ],
         "metadata": null,
         "package": null,
