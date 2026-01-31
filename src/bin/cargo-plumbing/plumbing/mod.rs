@@ -3,6 +3,7 @@ use cargo::{CargoResult, GlobalContext};
 pub(crate) mod locate_manifest;
 pub(crate) mod lock_dependencies;
 pub(crate) mod plan_build;
+pub(crate) mod read_config;
 pub(crate) mod read_lockfile;
 pub(crate) mod read_manifest;
 pub(crate) mod resolve_features;
@@ -20,6 +21,9 @@ pub(crate) enum Plumbing {
     /// Read the manifest file
     #[command()]
     ReadManifest(read_manifest::Args),
+    /// Read configuration including build and target directories
+    #[command()]
+    ReadConfig(read_config::Args),
     /// Lock the dependencies
     #[command()]
     LockDependencies(lock_dependencies::Args),
@@ -40,6 +44,7 @@ impl Plumbing {
             Self::LocateManifest(args) => locate_manifest::exec(gctx, args),
             Self::ReadLockfile(args) => read_lockfile::exec(gctx, args),
             Self::ReadManifest(args) => read_manifest::exec(gctx, args),
+            Self::ReadConfig(args) => read_config::exec(gctx, args),
             Self::LockDependencies(args) => lock_dependencies::exec(gctx, args),
             Self::WriteLockfile(args) => write_lockfile::exec(gctx, args),
             Self::ResolveFeatures(args) => resolve_features::exec(gctx, args),

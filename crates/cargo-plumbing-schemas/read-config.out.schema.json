@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReadConfigOut",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "reason",
+        "manifest_path",
+        "target_directory",
+        "build_directory"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": [
+            "config"
+          ]
+        },
+        "manifest_path": {
+          "type": "string",
+          "description": "The path to the workspace or package manifest."
+        },
+        "target_directory": {
+          "type": "string",
+          "description": "The target directory where build artifacts are placed."
+        },
+        "build_directory": {
+          "type": "string",
+          "description": "The build directory (typically same as target directory for most configurations)."
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
