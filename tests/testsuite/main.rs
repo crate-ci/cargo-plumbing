@@ -10,6 +10,7 @@ mod locate_manifest;
 mod lock_dependencies;
 mod metadata;
 mod plan_build;
+mod read_config;
 mod read_lockfile;
 mod read_manifest;
 mod resolve_features;
