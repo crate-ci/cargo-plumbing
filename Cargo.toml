@@ -28,7 +28,7 @@ cargo-plumbing-schemas = { version = "0.0.1", path = "crates/cargo-plumbing-sche
 cargo-util = { git = "https://github.com/rust-lang/cargo", branch = "master" }
 cargo-util-schemas = { git = "https://github.com/rust-lang/cargo", branch = "master" }
 clap = "4.5.45"
-clap-cargo = "0.17.0"
+clap-cargo = "0.18.0"
 glob = "0.3.3"
 schemars = "1.0.4"
 semver = "1.0.26"
