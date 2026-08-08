@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use camino::Utf8PathBuf;
 use cargo::core::PackageIdSpec;
 use cargo::util::interning::InternedString;
 use cargo::CargoResult;
@@ -61,7 +62,7 @@ fn main() -> CargoResult<()> {
         let stdout = child.stdout.take().expect("failed to get stdout");
         let messages = LocateManifestOut::parse_stream(BufReader::new(stdout));
 
-        let mut manifest_path: Option<camino::Utf8PathBuf> = None;
+        let mut manifest_path: Option<Utf8PathBuf> = None;
 
         // The output of `locate-manifest` is in the form of a `ManifestLocation` message. We
         // extract this information from stdout.
@@ -135,13 +136,11 @@ fn main() -> CargoResult<()> {
                         path.pop();
                     }
 
-                    // The members and default-members fields in the manifest may still be in their
-                    // glob form. We first need to resolve the glob.
                     if let Some(ref m) = ws.members {
-                        expanded_members = members_paths(&path, m)?;
+                        expanded_members = m.clone();
                     }
                     if let Some(ref m) = ws.default_members {
-                        expanded_default_members = members_paths(&path, m)?;
+                        expanded_default_members = m.clone();
                     }
                 } else {
                     // We are now reading the member's manifest.
@@ -152,8 +151,8 @@ fn main() -> CargoResult<()> {
 
                     // If the current manifest a part of the workspace member, we add that to the
                     // list of members.
-                    for (m_path, _) in &expanded_members {
-                        if m_path.join("Cargo.toml") == *path {
+                    for m_path in &expanded_members {
+                        if m_path == path {
                             workspace_members.push(id.clone());
                             continue;
                         }
@@ -161,8 +160,8 @@ fn main() -> CargoResult<()> {
 
                     // If the current manifest is a part of the default workspace member, we add
                     // that to the list of default members.
-                    for (m_path, _) in &expanded_default_members {
-                        if m_path.join("Cargo.toml") == *path {
+                    for m_path in &expanded_default_members {
+                        if m_path == path {
                             workspace_default_members.push(id.clone());
                             continue;
                         }
@@ -303,46 +302,4 @@ fn cargo_plumbing_bin() -> Command {
         cmd.arg("run");
         cmd
     }
-}
-
-/// The members and default-members values from the manifest may still be in their glob form. This
-/// utility function exist to resolve their glob values.
-fn members_paths(
-    root_dir: &Path,
-    globs: &Vec<String>,
-) -> CargoResult<Vec<(PathBuf, Option<String>)>> {
-    let mut expanded_list = Vec::new();
-
-    for glob in globs {
-        let pathbuf = root_dir.join(glob);
-
-        // Expand the glob if the path is valid.
-        let expanded_paths = if let Some(path) = &pathbuf.to_str() {
-            glob::glob(path)?.collect::<Result<Vec<_>, _>>()?
-        } else {
-            Vec::new()
-        };
-
-        // If glob does not find any valid paths, then put the original
-        // path in the expanded list to maintain backwards compatibility.
-        if expanded_paths.is_empty() {
-            expanded_list.push((pathbuf, None));
-        } else {
-            let used_glob_pattern = expanded_paths.len() > 1 || expanded_paths[0] != pathbuf;
-            let glob = used_glob_pattern.then_some(glob);
-
-            // Some OS can create system support files anywhere.
-            // (e.g. macOS creates `.DS_Store` file if you visit a directory using Finder.)
-            // Such files can be reported as a member path unexpectedly.
-            // Check and filter out non-directory paths to prevent pushing such accidental unwanted path
-            // as a member.
-            for expanded_path in expanded_paths {
-                if expanded_path.is_dir() {
-                    expanded_list.push((expanded_path, glob.cloned()));
-                }
-            }
-        }
-    }
-
-    Ok(expanded_list)
 }
