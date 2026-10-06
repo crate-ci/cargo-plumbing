@@ -32,13 +32,47 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
                 workspace: true,
                 path: Utf8PathBuf::try_from(gctx.cwd().join(pkg.manifest_path()))?,
                 pkg_id: Some(pkg.package_id().to_spec()),
-                manifest: pkg.manifest().normalized_toml().clone(),
+                manifest: {
+                    let mut manifest = pkg.manifest().normalized_toml().clone();
+                    if let Some(ref mut manifest_ws) = manifest.workspace {
+                        manifest_ws.default_members = Some(
+                            workspace
+                                .default_members()
+                                .map(|m| m.manifest_path().to_string_lossy().into_owned())
+                                .collect(),
+                        );
+                        manifest_ws.members = Some(
+                            workspace
+                                .members()
+                                .map(|m| m.manifest_path().to_string_lossy().into_owned())
+                                .collect(),
+                        );
+                    }
+                    manifest
+                },
             },
             MaybePackage::Virtual(v) => ReadManifestOut::Manifest {
                 workspace: true,
                 path: Utf8PathBuf::try_from(gctx.cwd().join(workspace.root_manifest()))?,
                 pkg_id: None,
-                manifest: v.normalized_toml().clone(),
+                manifest: {
+                    let mut manifest = v.normalized_toml().clone();
+                    if let Some(ref mut manifest_ws) = manifest.workspace {
+                        manifest_ws.default_members = Some(
+                            workspace
+                                .default_members()
+                                .map(|m| m.manifest_path().to_string_lossy().into_owned())
+                                .collect(),
+                        );
+                        manifest_ws.members = Some(
+                            workspace
+                                .members()
+                                .map(|m| m.manifest_path().to_string_lossy().into_owned())
+                                .collect(),
+                        );
+                    }
+                    manifest
+                },
             },
         };
         gctx.shell().print_json(&msg)?;
