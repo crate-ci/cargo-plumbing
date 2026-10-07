@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use cargo::CargoResult;
-use cargo::core::PackageIdSpec;
 use cargo::util::interning::InternedString;
+use cargo::workspace::PackageIdSpec;
 use cargo_plumbing_schemas::locate_manifest::LocateManifestOut;
 use cargo_plumbing_schemas::read_manifest::ReadManifestOut;
 use cargo_util_schemas::manifest::{Hints, RustVersion, VecStringOrBool};

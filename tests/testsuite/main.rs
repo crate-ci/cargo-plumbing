@@ -15,7 +15,9 @@ mod read_manifest;
 mod resolve_features;
 mod write_lockfile;
 
-use cargo_test_support::{ArgLineCommandExt, Execs, Project, TestEnvCommandExt, execs, process};
+use cargo_test_support::{
+    ArgLineCommandExt, Execs, Project, TestEnvCommandExt, execs, process, snapbox,
+};
 use cargo_util::ProcessBuilder;
 
 pub fn cargo_plumbing_exe() -> std::path::PathBuf {

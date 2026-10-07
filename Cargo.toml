@@ -6,7 +6,7 @@ members = ["crates/*"]
 repository = "https://github.com/crate-ci/cargo-plumbing"
 license = "MIT OR Apache-2.0"
 edition = "2024"
-rust-version = "1.90.0"  # MSRV
+rust-version = "1.99.0"  # MSRV
 include = [
   "build.rs",
   "src/**/*",
@@ -27,6 +27,7 @@ cargo-test-support = { git = "https://github.com/rust-lang/cargo", branch = "mas
 cargo-plumbing-schemas = { version = "0.0.1", path = "crates/cargo-plumbing-schemas" }
 cargo-util = { git = "https://github.com/rust-lang/cargo", branch = "master" }
 cargo-util-schemas = { git = "https://github.com/rust-lang/cargo", branch = "master" }
+cargo-util-terminal = { git = "https://github.com/rust-lang/cargo", branch = "master" }
 clap = "4.5.45"
 clap-cargo = "0.18.0"
 glob = "0.3.3"
@@ -35,8 +36,9 @@ semver = "1.0.26"
 serde = "1.0.219"
 serde_json = "1.0.142"
 serde-untagged = "0.1.8"
-snapbox = { version = "0.6.21", features = ["cmd", "path", "examples"] }
-toml = "0.9.5"
+snapbox = "1.2.0"
+# Keep compatible with cargo-util-schemas
+toml = "1.1.5"
 url = "2.5.4"
 
 [workspace.lints.rust]
@@ -152,6 +154,7 @@ cargo.workspace = true
 cargo-plumbing-schemas.workspace = true
 cargo-util.workspace = true
 cargo-util-schemas.workspace = true
+cargo-util-terminal.workspace = true
 clap = { workspace = true, features = ["derive"] }
 clap-cargo.workspace = true
 semver.workspace = true
@@ -165,7 +168,7 @@ cargo-test-macro.workspace = true
 cargo-test-support.workspace = true
 glob.workspace = true
 serde_json.workspace = true
-snapbox.workspace = true
+snapbox = { workspace = true, features = ["examples"] }
 
 [lints]
 workspace = true

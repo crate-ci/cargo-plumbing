@@ -1,11 +1,11 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::BTreeMap;
 
 use anyhow::{Context as _, anyhow};
 use cargo::CargoResult;
-use cargo::core::{
-    PackageId, PackageIdSpec, Resolve, ResolveVersion, SourceId, SourceKind, Workspace,
-};
+use cargo::resolver::{Resolve, ResolveVersion};
 use cargo::util::Graph;
+use cargo::util::data_structures::{HashMap, HashSet};
+use cargo::workspace::{PackageId, PackageIdSpec, SourceId, SourceKind, Workspace};
 use cargo_plumbing_schemas::lockfile::{NormalizedDependency, NormalizedPatch, NormalizedResolve};
 use cargo_util_schemas::lockfile::{
     TomlLockfile, TomlLockfileDependency, TomlLockfileMetadata, TomlLockfilePackageId,
@@ -24,11 +24,11 @@ pub fn into_resolve(
 ) -> CargoResult<Resolve> {
     let path_deps = build_path_deps(ws)?;
 
-    let mut checksums = HashMap::new();
+    let mut checksums = HashMap::default();
 
     let live_pkgs = {
-        let mut all_pkgs = HashSet::new();
-        let mut live_pkgs = HashMap::new();
+        let mut all_pkgs = HashSet::default();
+        let mut live_pkgs = HashMap::default();
         for pkg in packages.iter() {
             if !all_pkgs.insert(pkg.id.clone()) {
                 anyhow::bail!("package `{}` is specified twice", pkg.id.name());
@@ -53,12 +53,12 @@ pub fn into_resolve(
     // is used to find package ids even if dependencies have missing
     // information. This map is from name to version to source to actual
     // package ID. (various levels to drill down step by step)
-    let mut map = HashMap::new();
+    let mut map = HashMap::default();
     for (id, _) in live_pkgs.values() {
         map.entry(id.name().as_str())
-            .or_insert_with(HashMap::new)
+            .or_insert_with(HashMap::default)
             .entry(id.version())
-            .or_insert_with(HashMap::new)
+            .or_insert_with(HashMap::default)
             .insert(id.source_id(), *id);
     }
 
@@ -119,7 +119,7 @@ pub fn into_resolve(
     };
 
     let replacements = {
-        let mut replacements = HashMap::new();
+        let mut replacements = HashMap::default();
         for &(ref id, pkg) in live_pkgs.values() {
             if let Some(ref replace) = pkg.replace {
                 assert!(pkg.dependencies.is_none());
@@ -145,8 +145,8 @@ pub fn into_resolve(
     };
 
     let metadata = BTreeMap::new();
-    let features = HashMap::new();
-    let summaries = HashMap::new();
+    let features = HashMap::default();
+    let summaries = HashMap::default();
 
     // We use a separate schema from cargo's lockfile versions, where it is comparable to the V4
     // lockfile version.
@@ -270,7 +270,7 @@ pub fn normalize_packages(
     // We first parse the checksums to be indexable by `PackageIdSpec`. The metadata table
     // itself has keys prefixed with "checksum " then followed by an `TomlLockfilePackageId`.
     let mut metadata_map = {
-        let mut metadata_map = HashMap::new();
+        let mut metadata_map = HashMap::default();
         if let Some(metadata) = metadata {
             let prefix = "checksum ";
             for (k, v) in metadata {

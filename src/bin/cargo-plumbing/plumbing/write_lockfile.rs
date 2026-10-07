@@ -2,8 +2,8 @@ use std::io::{self, BufReader, IsTerminal, Write};
 use std::path::PathBuf;
 
 use anyhow::Context;
-use cargo::core::SourceKind;
 use cargo::util::Filesystem;
+use cargo::workspace::SourceKind;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing_schemas::lockfile::NormalizedDependency;
 use cargo_plumbing_schemas::write_lockfile::WriteLockfileIn;

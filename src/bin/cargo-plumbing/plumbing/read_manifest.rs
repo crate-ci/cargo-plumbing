@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use anyhow::Context as _;
 use camino::Utf8PathBuf;
-use cargo::core::{
+use cargo::workspace::parser::read_manifest;
+use cargo::workspace::{
     EitherManifest, MaybePackage, SourceId, Workspace, WorkspaceConfig, find_workspace_root,
 };
-use cargo::util::toml::read_manifest;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing_schemas::read_manifest::ReadManifestOut;
 use cargo_util::paths;
