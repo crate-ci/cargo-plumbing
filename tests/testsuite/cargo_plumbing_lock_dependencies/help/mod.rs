@@ -1,5 +1,5 @@
-use cargo_test_support::file;
 use cargo_test_support::prelude::*;
+use cargo_test_support::{file, snapbox};
 
 use crate::CargoCommandExt;
 

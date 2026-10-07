@@ -2,8 +2,8 @@ use cargo_plumbing_schemas::read_lockfile::ReadLockfileOut;
 use cargo_plumbing_schemas::read_manifest::ReadManifestOut;
 use cargo_test_macro::cargo_test;
 use cargo_test_support::registry::{Dependency, Package, RegistryBuilder};
+use cargo_test_support::snapbox::IntoData;
 use cargo_test_support::{basic_manifest, cross_compile, git, project, str};
-use snapbox::IntoData;
 
 use crate::ProjectExt;
 

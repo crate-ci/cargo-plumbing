@@ -2,8 +2,8 @@ use std::io::{self, BufReader, IsTerminal, Write};
 use std::path::PathBuf;
 
 use anyhow::Context;
-use cargo::core::SourceKind;
 use cargo::util::Filesystem;
+use cargo::workspace::SourceKind;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing_schemas::lockfile::NormalizedDependency;
 use cargo_plumbing_schemas::write_lockfile::WriteLockfileIn;
@@ -18,10 +18,10 @@ pub(crate) struct Args {
 
 pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
     let lock_path = gctx.cwd().join(args.lockfile_path);
-    if let Some(file_name) = lock_path.file_name() {
-        if file_name != "Cargo.lock" {
-            anyhow::bail!("lockfile name should be `Cargo.lock`");
-        }
+    if let Some(file_name) = lock_path.file_name()
+        && file_name != "Cargo.lock"
+    {
+        anyhow::bail!("lockfile name should be `Cargo.lock`");
     }
 
     let stdin = io::stdin();
@@ -71,11 +71,11 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
         }
     }
 
-    if let Some(v) = lock_version {
-        if v >= 2 {
-            while out.ends_with("\n\n") {
-                out.pop();
-            }
+    if let Some(v) = lock_version
+        && v >= 2
+    {
+        while out.ends_with("\n\n") {
+            out.pop();
         }
     }
 
@@ -103,37 +103,37 @@ fn emit_package(package: NormalizedDependency, out: &mut String) {
         out.push_str(&format!("version = \"{version}\"\n"));
     }
 
-    if let Some(url) = package.id.url() {
-        if let Some(kind) = package.id.kind() {
-            out.push_str("source = \"");
-            emit_source_value(url, kind, &package.rev, out);
-            out.push_str("\"\n");
-        }
+    if let Some(url) = package.id.url()
+        && let Some(kind) = package.id.kind()
+    {
+        out.push_str("source = \"");
+        emit_source_value(url, kind, &package.rev, out);
+        out.push_str("\"\n");
     }
 
     if let Some(checksum) = &package.checksum {
         out.push_str(&format!("checksum = \"{checksum}\"\n"));
     }
 
-    if let Some(deps) = &package.dependencies {
-        if !deps.is_empty() {
-            out.push_str("dependencies = [\n");
-            for dep in deps {
-                out.push_str(&format!(r#" "{}"#, dep.name()));
-                if let Some(version) = dep.version() {
-                    out.push_str(&format!(" {version}"));
-                }
-                if let Some(url) = dep.url() {
-                    if let Some(kind) = dep.kind() {
-                        out.push_str(" (");
-                        emit_source_value(url, kind, &None, out);
-                        out.push(')');
-                    }
-                }
-                out.push_str("\",\n");
+    if let Some(deps) = &package.dependencies
+        && !deps.is_empty()
+    {
+        out.push_str("dependencies = [\n");
+        for dep in deps {
+            out.push_str(&format!(r#" "{}"#, dep.name()));
+            if let Some(version) = dep.version() {
+                out.push_str(&format!(" {version}"));
             }
-            out.push_str("]\n");
+            if let Some(url) = dep.url()
+                && let Some(kind) = dep.kind()
+            {
+                out.push_str(" (");
+                emit_source_value(url, kind, &None, out);
+                out.push(')');
+            }
+            out.push_str("\",\n");
         }
+        out.push_str("]\n");
     }
 
     out.push('\n');
@@ -147,10 +147,10 @@ fn emit_source_value(url: &Url, kind: &SourceKind, rev: &Option<String>, out: &m
     if let Some(query) = url.query() {
         out.push_str(&format!("?{query}"));
     }
-    if let SourceKind::Git(git_ref) = kind {
-        if let Some(pretty) = git_ref.pretty_ref(true) {
-            out.push_str(&format!("?{pretty}"));
-        }
+    if let SourceKind::Git(git_ref) = kind
+        && let Some(pretty) = git_ref.pretty_ref(true)
+    {
+        out.push_str(&format!("?{pretty}"));
     }
     if let Some(rev) = rev {
         out.push_str(&format!("#{rev}"));

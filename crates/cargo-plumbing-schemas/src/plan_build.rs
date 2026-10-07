@@ -8,8 +8,8 @@ use cargo_util_schemas::core::PackageIdSpec;
 use cargo_util_schemas::manifest::{TomlDebugInfo, TomlManifest};
 use serde::{Deserialize, Serialize};
 
-use crate::lockfile::{NormalizedDependency, NormalizedPatch};
 use crate::MessageIter;
+use crate::lockfile::{NormalizedDependency, NormalizedPatch};
 
 /// Input messages for `cargo-plumbing plan-build`.
 #[derive(Serialize, Deserialize)]

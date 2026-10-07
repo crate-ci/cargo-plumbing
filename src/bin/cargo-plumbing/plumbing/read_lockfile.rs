@@ -18,10 +18,10 @@ pub(crate) struct Args {
 
 pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
     let lock_path = gctx.cwd().join(args.lockfile_path);
-    if let Some(file_name) = lock_path.file_name() {
-        if file_name != "Cargo.lock" {
-            anyhow::bail!("lockfile name should be `Cargo.lock`");
-        }
+    if let Some(file_name) = lock_path.file_name()
+        && file_name != "Cargo.lock"
+    {
+        anyhow::bail!("lockfile name should be `Cargo.lock`");
     }
 
     let root = lock_path.parent().expect("Lockfile path can't be root");

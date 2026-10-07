@@ -3,14 +3,14 @@ use std::io::{BufReader, IsTerminal};
 use std::path::PathBuf;
 use std::{env, io};
 
-use cargo::core::registry::PackageRegistry;
-use cargo::core::resolver::{CliFeatures, HasDevUnits};
-use cargo::core::{ResolveVersion, Workspace};
 use cargo::ops::resolve_with_previous;
+use cargo::resolver::{CliFeatures, HasDevUnits, ResolveVersion};
 use cargo::sources::SourceConfigMap;
+use cargo::workspace::Workspace;
+use cargo::workspace::registry::PackageRegistry;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::cargo::core::resolver::encode::{
-    encodable_resolve_node, encodable_source_id, EncodeState,
+    EncodeState, encodable_resolve_node, encodable_source_id,
 };
 use cargo_plumbing::ops::resolve::{into_resolve, normalize_dependency, normalize_packages};
 use cargo_plumbing_schemas::lock_dependencies::{LockDependenciesIn, LockDependenciesOut};

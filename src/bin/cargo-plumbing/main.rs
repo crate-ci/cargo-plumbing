@@ -1,4 +1,5 @@
-use cargo::{core::Shell, GlobalContext};
+use cargo::GlobalContext;
+use cargo_util_terminal::Shell;
 use clap::Parser as _;
 
 mod cli;

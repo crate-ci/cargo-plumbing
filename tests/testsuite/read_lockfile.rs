@@ -1,7 +1,7 @@
 use cargo_test_macro::cargo_test;
 use cargo_test_support::registry::{Package, RegistryBuilder};
+use cargo_test_support::snapbox::IntoData;
 use cargo_test_support::{basic_manifest, git, project, str};
-use snapbox::IntoData;
 
 use crate::ProjectExt;
 

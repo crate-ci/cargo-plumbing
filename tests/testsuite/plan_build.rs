@@ -896,7 +896,7 @@ fn package_with_build_scripts() {
     "id": 2,
     "platform": "[HOST_TARGET]",
     "profile": {
-      "debug_assertions": false,
+      "debug_assertions": true,
       "debuginfo": 2,
       "incremental": false,
       "lto": "false",

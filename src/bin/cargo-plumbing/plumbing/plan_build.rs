@@ -1,21 +1,22 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::BTreeSet;
 use std::io::{BufReader, IsTerminal};
 use std::path::PathBuf;
 use std::{env, io};
 
-use cargo::core::compiler::unit_dependencies::build_unit_dependencies;
-use cargo::core::compiler::unit_graph::UnitDep;
-use cargo::core::compiler::{
+use cargo::compiler::unit_dependencies::build_unit_dependencies;
+use cargo::compiler::unit_graph::UnitDep;
+use cargo::compiler::{
     CompileKind, CompileTarget, RustcTargetData, Unit, UnitInterner, UserIntent,
 };
-use cargo::core::manifest::TargetSourcePath;
-use cargo::core::profiles::{DebugInfo, Lto, PanicStrategy, Profiles};
-use cargo::core::resolver::features::{ActivateMap, FeatureOpts, FeaturesFor, ResolvedFeatures};
-use cargo::core::resolver::{CliFeatures, ForceAllTargets, HasDevUnits};
-use cargo::core::{FeatureValue, PackageIdSpecQuery, TargetKind, Workspace};
 use cargo::ops::{
-    get_resolved_packages, resolve_with_previous, CompileFilter, Packages, UnitGenerator,
+    CompileFilter, Packages, UnitGenerator, get_resolved_packages, resolve_with_previous,
 };
+use cargo::resolver::features::{ActivateMap, FeatureOpts, FeaturesFor, ResolvedFeatures};
+use cargo::resolver::{CliFeatures, ForceAllTargets, HasDevUnits};
+use cargo::util::data_structures::HashMap;
+use cargo::workspace::manifest::TargetSourcePath;
+use cargo::workspace::profiles::{DebugInfo, Lto, PanicStrategy, Profiles};
+use cargo::workspace::{FeatureValue, PackageIdSpecQuery, TargetKind, Workspace};
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::ops::resolve::{into_resolve, spec_to_id};
 use cargo_plumbing_schemas::plan_build::{
@@ -60,7 +61,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
     let mut locked_packages = Vec::new();
     let mut unused_patches = None;
     let mut specs = Vec::new();
-    let mut activated_features = ActivateMap::new();
+    let mut activated_features = ActivateMap::default();
     let mut req_bins = Vec::new();
     let mut req_tests = Vec::new();
     let mut req_benches = Vec::new();
@@ -87,7 +88,10 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
                 let features_for = match &*features_for {
                     "host" => FeaturesFor::HostDep,
                     "" => FeaturesFor::NormalOrDev,
-                    target => FeaturesFor::ArtifactDep(CompileTarget::new(target)?),
+                    target => FeaturesFor::ArtifactDep(CompileTarget::new(
+                        target,
+                        gctx.cli_unstable().json_target_spec,
+                    )?),
                 };
 
                 let k = (pkg_id, features_for);
@@ -115,7 +119,10 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
     let requested_kinds = CompileKind::from_requested_targets(gctx, &args.target)?;
     let target_data = RustcTargetData::new(&ws, &requested_kinds)?;
 
-    let explicit_host_kind = CompileKind::Target(CompileTarget::new(&target_data.rustc.host)?);
+    let explicit_host_kind = CompileKind::Target(CompileTarget::new(
+        &target_data.rustc.host,
+        gctx.cli_unstable().json_target_spec,
+    )?);
 
     let requested_profiles = Profiles::new(&ws, args.profile.unwrap_or("dev".to_owned()).into())?;
 
@@ -190,7 +197,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
     // Define the packages to be built based on the input given
     let spec = Packages::Packages(specs.iter().map(|spec| spec.name().to_owned()).collect());
 
-    let mut activated_dependencies = ActivateMap::new();
+    let mut activated_dependencies = ActivateMap::default();
     for (k, requested_fs) in &activated_features {
         let (id, _) = k;
         if let Some(pkg) = packages.iter().find(|p| p.package_id() == *id) {
@@ -237,7 +244,8 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
         interner: &unit_interner,
         has_dev_units,
     };
-    let root_units = unit_generator.generate_root_units()?;
+    // Only the root units are needed to construct this unit graph.
+    let (root_units, _selected_dep_kinds) = unit_generator.generate_root_units()?;
 
     let mut unit_graph = build_unit_dependencies(
         &ws,
@@ -247,7 +255,7 @@ pub(crate) fn exec(gctx: &GlobalContext, args: Args) -> CargoResult<()> {
         None,
         &root_units,
         &[],
-        &HashMap::new(),
+        &HashMap::default(),
         user_intent,
         &target_data,
         &requested_profiles,
@@ -352,6 +360,7 @@ fn emit_unit(
         panic: match unit.profile.panic {
             PanicStrategy::Abort => "abort",
             PanicStrategy::Unwind => "unwind",
+            PanicStrategy::ImmediateAbort => "immediate-abort",
         }
         .to_owned(),
     };

@@ -5,8 +5,8 @@ use std::marker::PhantomData;
 
 use serde::{Deserialize, Serialize};
 
-use crate::lockfile::{NormalizedDependency, NormalizedPatch};
 use crate::MessageIter;
+use crate::lockfile::{NormalizedDependency, NormalizedPatch};
 
 /// Output messages for `cargo-plumbing read-lockfile`.
 #[derive(Deserialize, Serialize)]

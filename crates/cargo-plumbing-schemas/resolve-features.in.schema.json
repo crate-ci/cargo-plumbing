@@ -150,10 +150,7 @@
             "null"
           ],
           "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "$ref": "#/$defs/FeatureDefinition"
           }
         },
         "lib": {
@@ -725,6 +722,45 @@
       ]
     },
     "TomlValue": true,
+    "FeatureDefinition": {
+      "description": "Definition of a feature.",
+      "anyOf": [
+        {
+          "description": "Features that this feature enables.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unstable feature `feature-metadata`. Metadata of this feature.",
+          "$ref": "#/$defs/FeatureMetadata"
+        }
+      ]
+    },
+    "FeatureMetadata": {
+      "description": "Unstable feature `feature-metadata`. Metadata of a feature.",
+      "type": "object",
+      "properties": {
+        "enables": {
+          "description": "Features that this feature enables.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "doc": {
+          "description": "Documentation for the feature.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "enables"
+      ]
+    },
     "TomlTarget": {
       "type": "object",
       "properties": {
@@ -910,6 +946,10 @@
             "string",
             "null"
           ]
+        },
+        "builtin": {
+          "type": "boolean",
+          "const": true
         },
         "features": {
           "type": [
@@ -1129,6 +1169,16 @@
     "Hints": {
       "type": "object",
       "properties": {
+        "min-opt-level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TomlValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "mostly-unused": {
           "anyOf": [
             {
@@ -1518,7 +1568,7 @@
           "default": null
         },
         "trim-paths": {
-          "description": "Unstable feature `-Ztrim-paths`.",
+          "description": "Controls the scope of path sanitization in build outputs.",
           "anyOf": [
             {
               "$ref": "#/$defs/TomlTrimPaths"
@@ -1543,37 +1593,33 @@
       "type": "string"
     },
     "TomlDebugInfo": {
-      "type": "string",
+      "type": [
+        "string",
+        "integer",
+        "boolean"
+      ],
       "enum": [
-        "None",
-        "LineDirectivesOnly",
-        "LineTablesOnly",
-        "Limited",
-        "Full"
+        "none",
+        "line-directives-only",
+        "line-tables-only",
+        "limited",
+        "full",
+        0,
+        1,
+        2,
+        false,
+        true
       ]
     },
     "PackageIdSpec": {
       "type": "string"
     },
     "TomlTrimPaths": {
-      "anyOf": [
-        {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/TomlTrimPathsValue"
-          }
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "TomlTrimPathsValue": {
       "type": "string",
       "enum": [
-        "diagnostics",
-        "macro",
-        "object"
+        "none",
+        "object",
+        "all"
       ]
     },
     "NormalizedDependency": {

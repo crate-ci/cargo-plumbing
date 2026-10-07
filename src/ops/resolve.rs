@@ -1,11 +1,11 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::BTreeMap;
 
-use anyhow::{anyhow, Context as _};
-use cargo::core::{
-    PackageId, PackageIdSpec, Resolve, ResolveVersion, SourceId, SourceKind, Workspace,
-};
-use cargo::util::Graph;
+use anyhow::{Context as _, anyhow};
 use cargo::CargoResult;
+use cargo::resolver::{Resolve, ResolveVersion};
+use cargo::util::Graph;
+use cargo::util::data_structures::{HashMap, HashSet};
+use cargo::workspace::{PackageId, PackageIdSpec, SourceId, SourceKind, Workspace};
 use cargo_plumbing_schemas::lockfile::{NormalizedDependency, NormalizedPatch, NormalizedResolve};
 use cargo_util_schemas::lockfile::{
     TomlLockfile, TomlLockfileDependency, TomlLockfileMetadata, TomlLockfilePackageId,
@@ -24,11 +24,11 @@ pub fn into_resolve(
 ) -> CargoResult<Resolve> {
     let path_deps = build_path_deps(ws)?;
 
-    let mut checksums = HashMap::new();
+    let mut checksums = HashMap::default();
 
     let live_pkgs = {
-        let mut all_pkgs = HashSet::new();
-        let mut live_pkgs = HashMap::new();
+        let mut all_pkgs = HashSet::default();
+        let mut live_pkgs = HashMap::default();
         for pkg in packages.iter() {
             if !all_pkgs.insert(pkg.id.clone()) {
                 anyhow::bail!("package `{}` is specified twice", pkg.id.name());
@@ -53,12 +53,12 @@ pub fn into_resolve(
     // is used to find package ids even if dependencies have missing
     // information. This map is from name to version to source to actual
     // package ID. (various levels to drill down step by step)
-    let mut map = HashMap::new();
+    let mut map = HashMap::default();
     for (id, _) in live_pkgs.values() {
         map.entry(id.name().as_str())
-            .or_insert_with(HashMap::new)
+            .or_insert_with(HashMap::default)
             .entry(id.version())
-            .or_insert_with(HashMap::new)
+            .or_insert_with(HashMap::default)
             .insert(id.source_id(), *id);
     }
 
@@ -119,7 +119,7 @@ pub fn into_resolve(
     };
 
     let replacements = {
-        let mut replacements = HashMap::new();
+        let mut replacements = HashMap::default();
         for &(ref id, pkg) in live_pkgs.values() {
             if let Some(ref replace) = pkg.replace {
                 assert!(pkg.dependencies.is_none());
@@ -145,8 +145,8 @@ pub fn into_resolve(
     };
 
     let metadata = BTreeMap::new();
-    let features = HashMap::new();
-    let summaries = HashMap::new();
+    let features = HashMap::default();
+    let summaries = HashMap::default();
 
     // We use a separate schema from cargo's lockfile versions, where it is comparable to the V4
     // lockfile version.
@@ -178,10 +178,10 @@ pub fn get_path_deps_source_id<'a>(
             return Some(version_source.values().next().unwrap());
         }
 
-        if let Some(pkg_version) = &package_version {
-            if let Some(source_id) = version_source.get(pkg_version) {
-                return Some(source_id);
-            }
+        if let Some(pkg_version) = &package_version
+            && let Some(source_id) = version_source.get(pkg_version)
+        {
+            return Some(source_id);
         }
 
         None
@@ -193,38 +193,35 @@ pub fn spec_to_id(
     source_id: Option<&SourceId>,
     git_rev: Option<String>,
 ) -> CargoResult<Option<PackageId>> {
-    if let Some(kind) = spec.kind() {
-        if let Some(url) = spec.url() {
-            if let Some(version) = spec.version() {
-                let name = spec.name();
-                let source_id = match kind {
-                    // We're splitting the git reference into a separate field called `rev`. This
-                    // means the GitReference from source itself may or may not have what we need.
-                    // Therefore, we need a `git_rev` to construct the source ID.
-                    SourceKind::Git(git_reference) => {
-                        let source_id = SourceId::for_git(url, git_reference.clone())?
-                            .with_git_precise(git_rev);
-                        Ok(source_id)
-                    }
-                    SourceKind::Registry | SourceKind::SparseRegistry => {
-                        SourceId::for_registry(url)
-                    }
-                    SourceKind::Path => SourceId::for_path(
-                        &url.to_file_path().map_err(|_| anyhow!("invalid path"))?,
-                    ),
-                    _ => anyhow::bail!("unsupported source"),
-                }?;
-
-                return Ok(Some(PackageId::new(name.into(), version, source_id)));
+    if let Some(kind) = spec.kind()
+        && let Some(url) = spec.url()
+        && let Some(version) = spec.version()
+    {
+        let name = spec.name();
+        let source_id = match kind {
+            // We're splitting the git reference into a separate field called `rev`. This
+            // means the GitReference from source itself may or may not have what we need.
+            // Therefore, we need a `git_rev` to construct the source ID.
+            SourceKind::Git(git_reference) => {
+                let source_id =
+                    SourceId::for_git(url, git_reference.clone())?.with_git_precise(git_rev);
+                Ok(source_id)
             }
-        }
+            SourceKind::Registry | SourceKind::SparseRegistry => SourceId::for_registry(url),
+            SourceKind::Path => {
+                SourceId::for_path(&url.to_file_path().map_err(|_| anyhow!("invalid path"))?)
+            }
+            _ => anyhow::bail!("unsupported source"),
+        }?;
+
+        return Ok(Some(PackageId::new(name.into(), version, source_id)));
     }
 
-    if let Some(source_id) = source_id {
-        if let Some(version) = spec.version() {
-            let name = spec.name();
-            return Ok(Some(PackageId::new(name.into(), version, *source_id)));
-        }
+    if let Some(source_id) = source_id
+        && let Some(version) = spec.version()
+    {
+        let name = spec.name();
+        return Ok(Some(PackageId::new(name.into(), version, *source_id)));
     }
 
     Ok(None)
@@ -273,7 +270,7 @@ pub fn normalize_packages(
     // We first parse the checksums to be indexable by `PackageIdSpec`. The metadata table
     // itself has keys prefixed with "checksum " then followed by an `TomlLockfilePackageId`.
     let mut metadata_map = {
-        let mut metadata_map = HashMap::new();
+        let mut metadata_map = HashMap::default();
         if let Some(metadata) = metadata {
             let prefix = "checksum ";
             for (k, v) in metadata {

@@ -2,13 +2,11 @@
 //!
 //! This module is a temporary copy from the cargo codebase.
 
-use std::collections::{HashMap, HashSet};
-
-use cargo::core::{
-    Dependency, GitReference, Package, PackageId, Resolve, ResolveVersion, SourceId, Workspace,
-};
-use cargo::util::interning::InternedString;
 use cargo::CargoResult;
+use cargo::resolver::{Resolve, ResolveVersion};
+use cargo::util::data_structures::{HashMap, HashSet};
+use cargo::util::interning::InternedString;
+use cargo::workspace::{Dependency, GitReference, Package, PackageId, SourceId, Workspace};
 use cargo_util_schemas::lockfile::{
     TomlLockfileDependency, TomlLockfilePackageId, TomlLockfileSourceId,
 };
@@ -25,8 +23,8 @@ pub fn build_path_deps(
         .filter(|p| p.package_id().source_id().is_path())
         .collect::<Vec<_>>();
 
-    let mut ret: HashMap<String, HashMap<semver::Version, SourceId>> = HashMap::new();
-    let mut visited = HashSet::new();
+    let mut ret: HashMap<String, HashMap<semver::Version, SourceId>> = HashMap::default();
+    let mut visited = HashSet::default();
     for member in members.iter() {
         ret.entry(member.package_id().name().to_string())
             .or_default()
@@ -40,8 +38,8 @@ pub fn build_path_deps(
         build_pkg(member, ws, &mut ret, &mut visited);
     }
     for deps in ws.root_patch()?.values() {
-        for dep in deps {
-            build_dep(dep, ws, &mut ret, &mut visited);
+        for patch in deps {
+            build_dep(&patch.dep, ws, &mut ret, &mut visited);
         }
     }
     for (_, dep) in ws.root_replace() {
@@ -94,11 +92,11 @@ pub struct EncodeState<'a> {
 impl<'a> EncodeState<'a> {
     pub fn new(resolve: &'a Resolve) -> EncodeState<'a> {
         let counts = if resolve.version() >= ResolveVersion::V2 {
-            let mut map = HashMap::new();
+            let mut map = HashMap::default();
             for id in resolve.iter() {
                 let slot = map
                     .entry(id.name())
-                    .or_insert_with(HashMap::new)
+                    .or_insert_with(HashMap::default)
                     .entry(id.version())
                     .or_insert(0);
                 *slot += 1;
@@ -152,13 +150,11 @@ pub fn encodable_package_id(
 ) -> TomlLockfilePackageId {
     let mut version = Some(id.version().to_string());
     let mut id_to_encode = id.source_id();
-    if resolve_version <= ResolveVersion::V2 {
-        if let Some(GitReference::Branch(b)) = id_to_encode.git_reference() {
-            if b == "master" {
-                id_to_encode =
-                    SourceId::for_git(id_to_encode.url(), GitReference::DefaultBranch).unwrap();
-            }
-        }
+    if resolve_version <= ResolveVersion::V2
+        && let Some(GitReference::Branch(b)) = id_to_encode.git_reference()
+        && b == "master"
+    {
+        id_to_encode = SourceId::for_git(id_to_encode.url(), GitReference::DefaultBranch).unwrap();
     }
     let mut source = encodable_source_id(id_to_encode.without_precise(), resolve_version);
     if let Some(counts) = &state.counts {

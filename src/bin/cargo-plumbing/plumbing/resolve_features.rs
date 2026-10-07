@@ -2,11 +2,11 @@ use std::env;
 use std::io::{self, BufReader, IsTerminal};
 use std::path::PathBuf;
 
-use cargo::core::compiler::{CompileKind, RustcTargetData};
-use cargo::core::resolver::features::{FeatureOpts, FeatureResolver};
-use cargo::core::resolver::{CliFeatures, HasDevUnits};
-use cargo::core::Workspace;
+use cargo::compiler::{CompileKind, RustcTargetData};
 use cargo::ops::{get_resolved_packages, resolve_with_previous};
+use cargo::resolver::features::{FeatureOpts, FeatureResolver};
+use cargo::resolver::{CliFeatures, HasDevUnits};
+use cargo::workspace::Workspace;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::ops::resolve::into_resolve;
 use cargo_plumbing_schemas::resolve_features::{ResolveFeaturesIn, ResolveFeaturesOut};
@@ -272,7 +272,7 @@ pub(crate) fn exec(gctx: &mut GlobalContext, args: Args) -> CargoResult<()> {
         .iter()
         .map(|(p, _fts)| p.package_id())
         .collect::<Vec<_>>();
-    let force_all_targets = cargo::core::resolver::ForceAllTargets::No;
+    let force_all_targets = cargo::resolver::ForceAllTargets::No;
 
     // HACK: The resolver must download packages before it can resolve features. This is a
     // workaround for a known limitation of the feature resolver.

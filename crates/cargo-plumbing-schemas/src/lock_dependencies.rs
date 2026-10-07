@@ -4,8 +4,8 @@ use std::{io::Read, marker::PhantomData};
 
 use serde::{Deserialize, Serialize};
 
-use crate::lockfile::{NormalizedDependency, NormalizedPatch};
 use crate::MessageIter;
+use crate::lockfile::{NormalizedDependency, NormalizedPatch};
 
 /// Input messages for `cargo-plumbing lock-dependencies`.
 #[derive(Serialize, Deserialize)]
