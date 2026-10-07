@@ -10,7 +10,7 @@ use cargo::ops::resolve_with_previous;
 use cargo::sources::SourceConfigMap;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::cargo::core::resolver::encode::{
-    encodable_resolve_node, encodable_source_id, EncodeState,
+    EncodeState, encodable_resolve_node, encodable_source_id,
 };
 use cargo_plumbing::ops::resolve::{into_resolve, normalize_dependency, normalize_packages};
 use cargo_plumbing_schemas::lock_dependencies::{LockDependenciesIn, LockDependenciesOut};

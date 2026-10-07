@@ -2,10 +2,10 @@ use std::env;
 use std::io::{self, BufReader, IsTerminal};
 use std::path::PathBuf;
 
+use cargo::core::Workspace;
 use cargo::core::compiler::{CompileKind, RustcTargetData};
 use cargo::core::resolver::features::{FeatureOpts, FeatureResolver};
 use cargo::core::resolver::{CliFeatures, HasDevUnits};
-use cargo::core::Workspace;
 use cargo::ops::{get_resolved_packages, resolve_with_previous};
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::ops::resolve::into_resolve;

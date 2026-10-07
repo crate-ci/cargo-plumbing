@@ -1,11 +1,11 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use anyhow::{anyhow, Context as _};
+use anyhow::{Context as _, anyhow};
+use cargo::CargoResult;
 use cargo::core::{
     PackageId, PackageIdSpec, Resolve, ResolveVersion, SourceId, SourceKind, Workspace,
 };
 use cargo::util::Graph;
-use cargo::CargoResult;
 use cargo_plumbing_schemas::lockfile::{NormalizedDependency, NormalizedPatch, NormalizedResolve};
 use cargo_util_schemas::lockfile::{
     TomlLockfile, TomlLockfileDependency, TomlLockfileMetadata, TomlLockfilePackageId,
@@ -178,10 +178,10 @@ pub fn get_path_deps_source_id<'a>(
             return Some(version_source.values().next().unwrap());
         }
 
-        if let Some(pkg_version) = &package_version {
-            if let Some(source_id) = version_source.get(pkg_version) {
-                return Some(source_id);
-            }
+        if let Some(pkg_version) = &package_version
+            && let Some(source_id) = version_source.get(pkg_version)
+        {
+            return Some(source_id);
         }
 
         None
@@ -193,38 +193,35 @@ pub fn spec_to_id(
     source_id: Option<&SourceId>,
     git_rev: Option<String>,
 ) -> CargoResult<Option<PackageId>> {
-    if let Some(kind) = spec.kind() {
-        if let Some(url) = spec.url() {
-            if let Some(version) = spec.version() {
-                let name = spec.name();
-                let source_id = match kind {
-                    // We're splitting the git reference into a separate field called `rev`. This
-                    // means the GitReference from source itself may or may not have what we need.
-                    // Therefore, we need a `git_rev` to construct the source ID.
-                    SourceKind::Git(git_reference) => {
-                        let source_id = SourceId::for_git(url, git_reference.clone())?
-                            .with_git_precise(git_rev);
-                        Ok(source_id)
-                    }
-                    SourceKind::Registry | SourceKind::SparseRegistry => {
-                        SourceId::for_registry(url)
-                    }
-                    SourceKind::Path => SourceId::for_path(
-                        &url.to_file_path().map_err(|_| anyhow!("invalid path"))?,
-                    ),
-                    _ => anyhow::bail!("unsupported source"),
-                }?;
-
-                return Ok(Some(PackageId::new(name.into(), version, source_id)));
+    if let Some(kind) = spec.kind()
+        && let Some(url) = spec.url()
+        && let Some(version) = spec.version()
+    {
+        let name = spec.name();
+        let source_id = match kind {
+            // We're splitting the git reference into a separate field called `rev`. This
+            // means the GitReference from source itself may or may not have what we need.
+            // Therefore, we need a `git_rev` to construct the source ID.
+            SourceKind::Git(git_reference) => {
+                let source_id =
+                    SourceId::for_git(url, git_reference.clone())?.with_git_precise(git_rev);
+                Ok(source_id)
             }
-        }
+            SourceKind::Registry | SourceKind::SparseRegistry => SourceId::for_registry(url),
+            SourceKind::Path => {
+                SourceId::for_path(&url.to_file_path().map_err(|_| anyhow!("invalid path"))?)
+            }
+            _ => anyhow::bail!("unsupported source"),
+        }?;
+
+        return Ok(Some(PackageId::new(name.into(), version, source_id)));
     }
 
-    if let Some(source_id) = source_id {
-        if let Some(version) = spec.version() {
-            let name = spec.name();
-            return Ok(Some(PackageId::new(name.into(), version, *source_id)));
-        }
+    if let Some(source_id) = source_id
+        && let Some(version) = spec.version()
+    {
+        let name = spec.name();
+        return Ok(Some(PackageId::new(name.into(), version, *source_id)));
     }
 
     Ok(None)

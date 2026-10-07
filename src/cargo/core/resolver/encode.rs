@@ -4,11 +4,11 @@
 
 use std::collections::{HashMap, HashSet};
 
+use cargo::CargoResult;
 use cargo::core::{
     Dependency, GitReference, Package, PackageId, Resolve, ResolveVersion, SourceId, Workspace,
 };
 use cargo::util::interning::InternedString;
-use cargo::CargoResult;
 use cargo_util_schemas::lockfile::{
     TomlLockfileDependency, TomlLockfilePackageId, TomlLockfileSourceId,
 };
@@ -152,13 +152,11 @@ pub fn encodable_package_id(
 ) -> TomlLockfilePackageId {
     let mut version = Some(id.version().to_string());
     let mut id_to_encode = id.source_id();
-    if resolve_version <= ResolveVersion::V2 {
-        if let Some(GitReference::Branch(b)) = id_to_encode.git_reference() {
-            if b == "master" {
-                id_to_encode =
-                    SourceId::for_git(id_to_encode.url(), GitReference::DefaultBranch).unwrap();
-            }
-        }
+    if resolve_version <= ResolveVersion::V2
+        && let Some(GitReference::Branch(b)) = id_to_encode.git_reference()
+        && b == "master"
+    {
+        id_to_encode = SourceId::for_git(id_to_encode.url(), GitReference::DefaultBranch).unwrap();
     }
     let mut source = encodable_source_id(id_to_encode.without_precise(), resolve_version);
     if let Some(counts) = &state.counts {

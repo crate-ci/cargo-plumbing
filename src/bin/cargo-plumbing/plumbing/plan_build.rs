@@ -14,7 +14,7 @@ use cargo::core::resolver::features::{ActivateMap, FeatureOpts, FeaturesFor, Res
 use cargo::core::resolver::{CliFeatures, ForceAllTargets, HasDevUnits};
 use cargo::core::{FeatureValue, PackageIdSpecQuery, TargetKind, Workspace};
 use cargo::ops::{
-    get_resolved_packages, resolve_with_previous, CompileFilter, Packages, UnitGenerator,
+    CompileFilter, Packages, UnitGenerator, get_resolved_packages, resolve_with_previous,
 };
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing::ops::resolve::{into_resolve, spec_to_id};

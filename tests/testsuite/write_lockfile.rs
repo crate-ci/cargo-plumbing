@@ -4,7 +4,7 @@ use cargo_test_support::compare::assert_e2e;
 use cargo_test_support::registry::{Package, RegistryBuilder};
 use cargo_test_support::{basic_lib_manifest, basic_manifest, git, project, str};
 
-use crate::{assert_not_exists, ProjectExt};
+use crate::{ProjectExt, assert_not_exists};
 
 #[cargo_test]
 fn package_with_deps() {

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::Context as _;
 use camino::Utf8PathBuf;
 use cargo::core::{
-    find_workspace_root, EitherManifest, MaybePackage, SourceId, Workspace, WorkspaceConfig,
+    EitherManifest, MaybePackage, SourceId, Workspace, WorkspaceConfig, find_workspace_root,
 };
 use cargo::util::toml::read_manifest;
 use cargo::{CargoResult, GlobalContext};

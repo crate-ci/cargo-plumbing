@@ -3,9 +3,9 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+use cargo::CargoResult;
 use cargo::core::PackageIdSpec;
 use cargo::util::interning::InternedString;
-use cargo::CargoResult;
 use cargo_plumbing_schemas::locate_manifest::LocateManifestOut;
 use cargo_plumbing_schemas::read_manifest::ReadManifestOut;
 use cargo_util_schemas::manifest::{Hints, RustVersion, VecStringOrBool};
@@ -123,7 +123,7 @@ fn main() -> CargoResult<()> {
 
                     // If the workspace manifest is a package, we add that to the members list,
                     // both the members and default members list.
-                    if let Some(ref id) = pkg_id {
+                    if let Some(id) = pkg_id {
                         workspace_members.push(id.clone());
                         workspace_default_members.push(id.clone());
                     }
@@ -172,49 +172,49 @@ fn main() -> CargoResult<()> {
                 // We need to add this package into the list of package. The format used by
                 // cargo-plumbing and format used by `cargo metadata` differs. We have to translate
                 // them first.
-                if let Some(id) = pkg_id {
-                    if let Some(package) = &manifest.package {
-                        packages.push(SerializedPackage {
-                            id,
-                            name: package.normalized_name()?.to_string(),
-                            version: package.normalized_version()?.unwrap(),
-                            license: package.normalized_license()?,
-                            license_file: package.normalized_license_file()?,
-                            description: package.normalized_description()?,
-                            source: (),
-                            dependencies: Vec::new(),
-                            targets: Vec::new(),
-                            features: BTreeMap::new(),
-                            manifest_path: path.clone().into_std_path_buf(),
-                            metadata: package.metadata.as_ref(),
-                            publish: match package.normalized_publish()? {
-                                Some(VecStringOrBool::VecString(v)) => Some(v),
-                                _ => None,
-                            },
-                            authors: package.normalized_authors()?.cloned().unwrap_or_default(),
-                            categories: package
-                                .normalized_categories()?
-                                .cloned()
-                                .unwrap_or_default(),
-                            keywords: package.normalized_keywords()?.cloned().unwrap_or_default(),
-                            readme: package.normalized_readme()?,
-                            repository: package.normalized_repository()?,
-                            homepage: package.normalized_homepage()?,
-                            documentation: package.normalized_documentation()?,
-                            edition: package
-                                .normalized_edition()?
-                                .cloned()
-                                .unwrap_or(String::from("2015")),
-                            links: package.links.as_ref(),
-                            metabuild: package
-                                .metabuild
-                                .as_ref()
-                                .map(|metabuild| metabuild.0.clone()),
-                            default_run: package.default_run.as_ref(),
-                            rust_version: package.normalized_rust_version()?,
-                            hints: manifest.hints.as_ref(),
-                        });
-                    }
+                if let Some(id) = pkg_id
+                    && let Some(package) = &manifest.package
+                {
+                    packages.push(SerializedPackage {
+                        id,
+                        name: package.normalized_name()?.to_string(),
+                        version: package.normalized_version()?.unwrap(),
+                        license: package.normalized_license()?,
+                        license_file: package.normalized_license_file()?,
+                        description: package.normalized_description()?,
+                        source: (),
+                        dependencies: Vec::new(),
+                        targets: Vec::new(),
+                        features: BTreeMap::new(),
+                        manifest_path: path.clone().into_std_path_buf(),
+                        metadata: package.metadata.as_ref(),
+                        publish: match package.normalized_publish()? {
+                            Some(VecStringOrBool::VecString(v)) => Some(v),
+                            _ => None,
+                        },
+                        authors: package.normalized_authors()?.cloned().unwrap_or_default(),
+                        categories: package
+                            .normalized_categories()?
+                            .cloned()
+                            .unwrap_or_default(),
+                        keywords: package.normalized_keywords()?.cloned().unwrap_or_default(),
+                        readme: package.normalized_readme()?,
+                        repository: package.normalized_repository()?,
+                        homepage: package.normalized_homepage()?,
+                        documentation: package.normalized_documentation()?,
+                        edition: package
+                            .normalized_edition()?
+                            .cloned()
+                            .unwrap_or(String::from("2015")),
+                        links: package.links.as_ref(),
+                        metabuild: package
+                            .metabuild
+                            .as_ref()
+                            .map(|metabuild| metabuild.0.clone()),
+                        default_run: package.default_run.as_ref(),
+                        rust_version: package.normalized_rust_version()?,
+                        hints: manifest.hints.as_ref(),
+                    });
                 }
             }
         }
