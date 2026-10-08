@@ -158,7 +158,7 @@ jobs:
     - name: Install cargo-tarpaulin
       run: cargo install cargo-tarpaulin
     - name: Gather coverage
-      run: cargo tarpaulin --output-dir coverage --out lcov
+      run: cargo tarpaulin --timeout 600 --output-dir coverage --out lcov
     - name: Publish to Coveralls
       uses: coverallsapp/github-action@master
       with:

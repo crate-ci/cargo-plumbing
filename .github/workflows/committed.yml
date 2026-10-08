@@ -25,4 +25,4 @@ jobs:
       with:
         fetch-depth: 0
     - name: Lint Commits
-      uses: crate-ci/committed@master
+      uses: crate-ci/committed@main
