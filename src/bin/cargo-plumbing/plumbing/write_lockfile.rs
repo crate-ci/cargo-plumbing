@@ -7,6 +7,7 @@ use cargo::workspace::SourceKind;
 use cargo::{CargoResult, GlobalContext};
 use cargo_plumbing_schemas::lockfile::NormalizedDependency;
 use cargo_plumbing_schemas::write_lockfile::WriteLockfileIn;
+use cargo_util_schemas::core::PackageIdSpec;
 use url::Url;
 
 #[derive(Debug, clap::Args)]
@@ -106,7 +107,7 @@ fn emit_package(package: NormalizedDependency, out: &mut String) {
     if let Some(url) = package.id.url()
         && let Some(kind) = package.id.kind()
     {
-        out.push_str("source = \"");
+        out.push_str(r#"source = ""#);
         emit_source_value(url, kind, &package.rev, out);
         out.push_str("\"\n");
     }
@@ -120,23 +121,34 @@ fn emit_package(package: NormalizedDependency, out: &mut String) {
     {
         out.push_str("dependencies = [\n");
         for dep in deps {
-            out.push_str(&format!(r#" "{}"#, dep.name()));
-            if let Some(version) = dep.version() {
-                out.push_str(&format!(" {version}"));
-            }
-            if let Some(url) = dep.url()
-                && let Some(kind) = dep.kind()
-            {
-                out.push_str(" (");
-                emit_source_value(url, kind, &None, out);
-                out.push(')');
-            }
+            out.push_str(r#" ""#);
+            emit_package_id(dep, out);
             out.push_str("\",\n");
         }
         out.push_str("]\n");
     }
 
+    if let Some(replace) = &package.replace {
+        out.push_str(r#"replace = ""#);
+        emit_package_id(replace, out);
+        out.push_str("\"\n");
+    }
+
     out.push('\n');
+}
+
+fn emit_package_id(id: &PackageIdSpec, out: &mut String) {
+    out.push_str(id.name());
+    if let Some(version) = id.version() {
+        out.push_str(&format!(" {version}"));
+    }
+    if let Some(url) = id.url()
+        && let Some(kind) = id.kind()
+    {
+        out.push_str(" (");
+        emit_source_value(url, kind, &None, out);
+        out.push(')');
+    }
 }
 
 fn emit_source_value(url: &Url, kind: &SourceKind, rev: &Option<String>, out: &mut String) {
