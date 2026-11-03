@@ -58,15 +58,64 @@ impl ResolveFeaturesIn {
 pub enum ResolveFeaturesOut {
     Activated {
         id: PackageIdSpec,
-        #[serde(skip_serializing_if = "String::is_empty")]
+        #[serde(default, skip_serializing_if = "String::is_empty")]
         features_for: String,
-        #[serde(skip_serializing_if = "Vec::is_empty")]
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
         features: Vec<String>,
     },
     Target {
         name: String,
         kind: String,
     },
+}
+
+#[test]
+fn activated_roundtrip() {
+    let mut messages = Vec::new();
+    for features_for in ["", "host"] {
+        for features in [vec![], vec!["default".to_owned()]] {
+            let message = ResolveFeaturesOut::Activated {
+                id: PackageIdSpec::new("demo".to_owned()),
+                features_for: features_for.to_owned(),
+                features,
+            };
+            let serialized = serde_json::to_string(&message).unwrap();
+            let deserialized: ResolveFeaturesOut = serde_json::from_str(&serialized).unwrap();
+            messages.push(deserialized);
+        }
+    }
+
+    snapbox::assert_data_eq!(
+        serde_json::to_string_pretty(&messages).unwrap(),
+        snapbox::str![[r#"
+[
+  {
+    "reason": "activated",
+    "id": "demo"
+  },
+  {
+    "reason": "activated",
+    "id": "demo",
+    "features": [
+      "default"
+    ]
+  },
+  {
+    "reason": "activated",
+    "id": "demo",
+    "features_for": "host"
+  },
+  {
+    "reason": "activated",
+    "id": "demo",
+    "features_for": "host",
+    "features": [
+      "default"
+    ]
+  }
+]
+"#]]
+    );
 }
 
 #[cfg(feature = "unstable-schema")]
