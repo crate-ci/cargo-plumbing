@@ -24,9 +24,7 @@
       },
       "required": [
         "reason",
-        "id",
-        "features_for",
-        "features"
+        "id"
       ]
     },
     {
