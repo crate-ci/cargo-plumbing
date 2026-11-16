@@ -2,9 +2,114 @@ use cargo_plumbing_schemas::read_lockfile::ReadLockfileOut;
 use cargo_test_macro::cargo_test;
 use cargo_test_support::compare::assert_e2e;
 use cargo_test_support::registry::{Package, RegistryBuilder};
-use cargo_test_support::{basic_lib_manifest, basic_manifest, git, project, str};
+use cargo_test_support::{Project, basic_lib_manifest, basic_manifest, git, project, str};
 
 use crate::{ProjectExt, assert_not_exists};
+
+#[cargo_test]
+fn package_with_path_replacement() {
+    Package::new("bar", "0.1.0").publish();
+
+    let p = project()
+        .file(
+            "Cargo.toml",
+            r#"
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                edition = "2024"
+
+                [dependencies]
+                bar = "0.1.0"
+
+                [replace]
+                "bar:0.1.0" = { path = "bar" }
+            "#,
+        )
+        .file("src/lib.rs", "")
+        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/src/lib.rs", "")
+        .build();
+
+    assert_replacement_roundtrip(&p, "bar 0.1.0");
+}
+
+#[cargo_test]
+fn package_with_git_replacement() {
+    Package::new("bar", "0.1.0").publish();
+    let (replacement, repo) = git::new_repo("replacement", |p| {
+        p.file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+            .file("src/lib.rs", "")
+    });
+    let head = repo.head().unwrap().target().unwrap();
+    repo.branch("replacement", &repo.find_commit(head).unwrap(), true)
+        .unwrap();
+    let url = replacement.url();
+
+    let p = project()
+        .file(
+            "Cargo.toml",
+            &format!(
+                r#"
+                    [package]
+                    name = "foo"
+                    version = "0.1.0"
+                    edition = "2024"
+
+                    [dependencies]
+                    bar = "0.1.0"
+
+                    [replace]
+                    "bar:0.1.0" = {{ git = '{url}', branch = "replacement" }}
+                "#,
+            ),
+        )
+        .file("src/lib.rs", "")
+        .build();
+
+    assert_replacement_roundtrip(&p, &format!("bar 0.1.0 (git+{url}?branch=replacement)"));
+}
+
+fn assert_replacement_roundtrip(p: &Project, expected_replace: &str) {
+    p.cargo_global("generate-lockfile").run();
+    let original: toml::Value = toml::from_str(&p.read_lockfile()).unwrap();
+    assert_eq!(original["version"].as_integer(), Some(4));
+    let replaced = original["package"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|package| package.get("replace").is_some())
+        .unwrap();
+    assert_eq!(replaced["replace"].as_str(), Some(expected_replace));
+
+    let out = p
+        .cargo_plumbing("plumbing read-lockfile")
+        .arg("--lockfile-path")
+        .arg(p.root().join("Cargo.lock"))
+        .run();
+    let stdout = String::from_utf8(out.stdout).unwrap();
+    let messages: Vec<ReadLockfileOut> = stdout
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(messages.iter().any(|message| matches!(
+        message,
+        ReadLockfileOut::LockedPackage { package } if package.replace.is_some()
+    )));
+
+    p.cargo_plumbing("plumbing write-lockfile")
+        .arg("--lockfile-path")
+        .arg(p.root().join("Cargo.lock"))
+        .with_stdin(stdout)
+        .with_stdout_data(str![])
+        .with_stderr_data(str![])
+        .run();
+
+    let rewritten: toml::Value = toml::from_str(&p.read_lockfile()).unwrap();
+    assert_eq!(rewritten, original);
+    p.cargo_global("metadata --format-version 1 --locked --offline")
+        .run();
+}
 
 #[cargo_test]
 fn package_with_deps() {
